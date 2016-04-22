@@ -78,7 +78,6 @@ function($stateProvider, $urlRouterProvider) {
       templateUrl: '/groupcategory.html',
       controller: 'editGroupsCtrl',
       onEnter: ['$state', 'auth', 'groups', function($state, auth,groups){
-        console.log("entering state editroups.groupcategory");
         if(!auth.isLoggedIn()){
           $state.go('login');
         }
@@ -127,7 +126,6 @@ function($stateProvider, $urlRouterProvider) {
     };
 
     auth.getToken = function (){
-      //console.log("local token "+$window.localStorage['apm-demoportal-token']);
       return $window.localStorage['apm-demoportal-token'];
     };
     auth.isAdmin = function(){
@@ -146,11 +144,9 @@ function($stateProvider, $urlRouterProvider) {
 
       if(token){
         var payload = JSON.parse($window.atob(token.split('.')[1]));
-          //console.log("yes logged");
           return payload.exp > Date.now() / 1000;
 
       } else {
-        //console.log("no not logged");
         return false;
       }
     };
@@ -174,7 +170,6 @@ function($stateProvider, $urlRouterProvider) {
 
     auth.logIn = function(user){
       return $http.post('/login', user).then(function(data){
-        console.log("token received : "+data.data.token)
         auth.saveToken(data.data.token);
       });
     };
@@ -282,7 +277,6 @@ app.factory('urlcategories', ['$http', 'auth', function($http, auth){
   };
     o.pullcategorytoapm = function(category,arrayid) {
       return $http.get('/getapmcategory/'+category, {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
-        console.log(JSON.stringify(data.data));
         if (data.data != "{KO}") {
           angular.copy(data.data,o.urlcategories[arrayid].urls)
           //data is the category.urls part
@@ -407,8 +401,7 @@ app.factory('groups', ['$http', 'auth', function($http, auth){
     });
   }
   o.categoryinGroup = function(groupname) {
-    //console.log("in factory categorugroup function");
-    //console.log("search "+groupname+"in"+JSON.stringify(o.groups));
+
   };
   return o;
 }]);
@@ -416,10 +409,8 @@ app.factory('groups', ['$http', 'auth', function($http, auth){
 app.controller('editGroupsCtrl', [
 '$scope','auth','groups','urlcategories','$state','$http','$mdToast',
 function($scope,auth,groups,urlcategories,$state,$http,$mdToast){
-  //$scope.group=groups.groups;
   $scope.group = {"name":"error no group found",
                   "category":[]};
-  //console.log(JSON.stringify(urlcategories));
   for(var mygroup in groups.groups) {
     if (groups.groups[mygroup].name == $state.params.id ) {
       $scope.group=groups.groups[mygroup];
@@ -435,10 +426,8 @@ function($scope,auth,groups,urlcategories,$state,$http,$mdToast){
         .hideDelay(3000)
     );
   };
-  //console.log($scope.group.category);
 
   $scope.togglecat = function (item, list) {
-    console.log("togglecat");
     var idx = list.indexOf(item);
     if (idx > -1) {
       list.splice(idx, 1);
@@ -452,9 +441,6 @@ function($scope,auth,groups,urlcategories,$state,$http,$mdToast){
     }, function(response){
         showSimpleToast('top right',"Cannot update group in Portal DB");
     });
-    console.log("after update");
-    console.log("groups "+groups.groups[mygroup].category);
-    console.log("scope "+$scope.group.category);
   };
   $scope.existscat = function (item, list) {
     return list.indexOf(item) > -1;
@@ -465,7 +451,6 @@ app.controller('GroupsCtrl', [
 '$scope','auth','groups','$state',
 function($scope,auth,groups,$state){
   $scope.groups=groups.groups;
-  console.log("from ctrl :"+$state.current.name);
 
   $scope.addGroup = function(){
     groups.addGroup($scope.newgroup.groupname).error(function(error){
@@ -510,9 +495,7 @@ function($scope,urlcategories,auth, $http,$mdToast,$mdDialog){
           .cancel('Cancel');
       $mdDialog.show(confirm).then(function() {
           //if confirm
-          console.log("yes");
           return $http.get('/getapmcategories', {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
-            //console.log("return data "+JSON.stringify(data));
             showSimpleToast("top right","Change done to Portal DB")
             if (data.data == "{KO}") {
               showSimpleToast("top right","Error making change to Portal DB")
@@ -540,7 +523,6 @@ function($scope,urlcategories,auth, $http,$mdToast,$mdDialog){
     apmconfig.username=$scope.apm.username;
     apmconfig.password=$scope.apm.password;
     return $http.post('/apmconfig', apmconfig, {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
-      console.log("return data "+JSON.stringify(data));
       showSimpleToast("top right","Change done to Portal DB")
     }, function(response) {
       showSimpleToast("top right","Error making change to Portal DB")

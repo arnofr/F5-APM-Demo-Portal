@@ -64,7 +64,6 @@ router.post('/apmconfig', function(req, res, next){
 //routing for passport authentication
 router.post('/login', function(req, res, next){
   if(!req.body.username || !req.body.password){
-    //console.log("user login, user "+req.body.username+" pass "+req.body.password);
     return res.status(400).json({message: 'Please fill out all fields'});
   }
 
@@ -92,7 +91,6 @@ router.post('/register', function(req, res, next){
   user.save(function (err){
     if(err){
       console.log("Error Registering new user in DB");
-      console.log(JSON.stringify(err));
       if (err.code == 11000) {return res.status(400).json({message: 'User already exists in DB'})}
       else {return next(err)};
     }
@@ -129,9 +127,6 @@ router.param('urlcategory', function(req, res, next, id) {
 });
 
 router.get('/urlcategories', auth, function(req, res, next) {
-  //need to filter returned url based on categgory group and user group
-
-  //console.log(req.payload.username);
   //we ask to retrieve user's group
   User.findOne({ username: req.payload.username },'username group', function (err, user) {
    if (err) { return next(err) }
@@ -139,10 +134,9 @@ router.get('/urlcategories', auth, function(req, res, next) {
     //then we find group definition containing allowed categories for group user
     Group.findOne({name: user.group}, function (err, group) {
      if (err) { return (err) }
-      console.log("categories from group "+user.group+ " are " + JSON.stringify(group.category));
       //find category in db belonging to that group
       Urlcategory.find({'name': { $in : group.category }}, function(err, urlcategories){
-        if(err){ console.log(err);  return next(err); }
+        if(err){   return next(err); }
         //by filtering urlcategories
 
         res.json(urlcategories);
@@ -187,7 +181,6 @@ router.get('/updateapmcategory/:urlcategory', auth, function(req, res, next) {
           console.log("apm change done");
           res.json("{OK}");
         } else {
-          //console.log(response);
           console.log("error found sending category to APM ...");
           res.json(error || response.body );
         }
@@ -209,14 +202,12 @@ router.get('/getapmcategory/:urlcategory', auth, function(req, res, next) {
     request(options, function (error, response, body) {
         if (!error  && response.statusCode == 200) {
           console.log("apm GET done");
-          console.log(JSON.parse(body).urls);
           //updating mangodb
           req.urlcategory.urls=JSON.parse(body).urls;
           req.urlcategory.save();
           //sending response
           res.json(JSON.parse(body).urls);
         } else {
-          //console.log(response);
           console.log("error found while retrieving category from APM ...");
           res.json("{KO}");
         }
@@ -245,7 +236,6 @@ router.get('/getapmcategories', auth, function(req, res, next) {
           }
         );
 
-          console.log(JSON.stringify(tmp));
         //now overwritting mongodb
         //droping the table
         //no error checking here
@@ -268,7 +258,7 @@ router.get('/getapmcategories', auth, function(req, res, next) {
           };
           //we could return tmp, but mongoose is cleaner ?
           Urlcategory.find( function(err, urlcategories){
-            if(err){ console.log(err);  return next(err); }
+            if(err){   return next(err); }
               res.json(urlcategories);
           });
           //easiest but this is acessing mongodb directly without going throu mongoose
@@ -283,7 +273,6 @@ router.get('/getapmcategories', auth, function(req, res, next) {
 
 
         } else {
-          //console.log(response);
           console.log("error found while retrieving category from APM ...");
           res.json("{KO}");
         }
@@ -295,7 +284,6 @@ router.get('/groups', auth, function(req, res, next) {
   //retrieve all groups
   Group.find( function (err, groups) {
     if (err) { return next(err) }
-    console.log("groups retrieved :"+JSON.stringify(groups) );
     res.json(groups);
   });
 });
