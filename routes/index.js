@@ -165,7 +165,7 @@ router.put('/urlcategories/:urlcategory', auth, function(req, res, next) {
 
 });
 
-//update apm category
+//update to apm one category
 router.get('/updateapmcategory/:urlcategory', auth, function(req, res, next) {
   //removing mango _id property
   for (var i = 0; i < req.urlcategory.urls.length; i++) {
@@ -215,6 +215,73 @@ router.get('/getapmcategory/:urlcategory', auth, function(req, res, next) {
           req.urlcategory.save();
           //sending response
           res.json(JSON.parse(body).urls);
+        } else {
+          //console.log(response);
+          console.log("error found while retrieving category from APM ...");
+          res.json("{KO}");
+        }
+    })
+  });
+});
+
+//retrieve all APM categories
+router.get('/getapmcategories', auth, function(req, res, next) {
+  APM.findOne({'name':"myapm"},  function (err, apm) {
+    if (err) { return (JSON.stringify(err)) }
+
+    var options = {
+      url: "https://"+apm.username+":"+apm.password+"@"+apm.ip+"/mgmt/tm/sys/url-db/url-category/",
+      method: 'GET',
+      strictSSL : false, //no certificate validation
+      rejectUnauthorized : false //no certificate validation
+    };
+    console.log("sending GET request to APM");
+    request(options, function (error, response, body) {
+        if (!error  && response.statusCode == 200) {
+          console.log("apm GET all category done");
+                    //removing default categories Uncategorized and User-Defined
+          var tmp = JSON.parse(body).items.filter(function( item){
+            return ((item.name !="Uncategorized") && (item.name !="User-Defined")) ;
+          }
+        );
+
+          console.log(JSON.stringify(tmp));
+        //now overwritting mongodb
+        //droping the table
+        //no error checking here
+        Urlcategory.collection.drop( function(err) {
+          console.log('MongoDB collection Urlcategory dropped');
+          //now inserting
+
+          for(var tmpcategory in tmp) {
+            newcategory = new Urlcategory();
+            newcategory.name             = tmp[tmpcategory].name;
+            newcategory.catNumber        = tmp[tmpcategory].catNumber;
+            newcategory.defaultAction    = tmp[tmpcategory].defaultAction;
+            newcategory.displayName      = tmp[tmpcategory].displayName;
+            newcategory.isCustom         = tmp[tmpcategory].isCustom;
+            newcategory.isRecategory     = tmp[tmpcategory].isRecategory;
+            newcategory.parentCatNumber  = tmp[tmpcategory].parentCatNumber;
+            newcategory.severityLevel    = tmp[tmpcategory].severityLevel;
+            newcategory.urls             = tmp[tmpcategory].urls
+            newcategory.save();
+          };
+          //we could return tmp, but mongoose is cleaner ?
+          Urlcategory.find( function(err, urlcategories){
+            if(err){ console.log(err);  return next(err); }
+              res.json(urlcategories);
+          });
+          //easiest but this is acessing mongodb directly without going throu mongoose
+          //thus urls in category doesn t have _id which breacks angularapp logic so far
+        /*  Urlcategory.collection.insert( tmp, function(err) {
+            console.log('MongoDB collection Urlcategory updated from APM');
+            return( res.json(tmp));
+            //now need to update categrory groups
+          })*/
+        });
+
+
+
         } else {
           //console.log(response);
           console.log("error found while retrieving category from APM ...");

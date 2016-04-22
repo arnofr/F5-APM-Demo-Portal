@@ -480,8 +480,8 @@ function($scope,auth,groups,$state){
 }]);
 
 app.controller('APMmgtCtrl', [
-'$scope','urlcategories','auth','$http','$mdToast',
-function($scope,urlcategories,auth, $http,$mdToast){
+'$scope','urlcategories','auth','$http','$mdToast','$mdDialog',
+function($scope,urlcategories,auth, $http,$mdToast,$mdDialog){
   $scope.apm={};
   $scope.apm.name ="myapm";
   $scope.apm.ip="192.168.142.15";
@@ -498,6 +498,40 @@ function($scope,urlcategories,auth, $http,$mdToast){
     );
   };
 
+
+  //md-dialog to push all category from apm
+  $scope.showConfirmbulkapmpull = function(ev) {
+    var confirm = $mdDialog.confirm()
+          .title('Bulk Update from APM')
+          .textContent('This will overwrite ALL Portal DB categories and Reset Portal DB groups')
+          .ariaLabel('Push Bulk from APM')
+          .targetEvent(ev)
+          .ok("Let's do it!")
+          .cancel('Cancel');
+      $mdDialog.show(confirm).then(function() {
+          //if confirm
+          console.log("yes");
+          return $http.get('/getapmcategories', {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
+            //console.log("return data "+JSON.stringify(data));
+            showSimpleToast("top right","Change done to Portal DB")
+            if (data.data == "{KO}") {
+              showSimpleToast("top right","Error making change to Portal DB")
+            }
+
+            angular.copy(data.data, urlcategories.urlcategories);
+          }, function(response) {
+            showSimpleToast("top right","Error making change to Portal DB")
+          })  ;
+
+
+
+      }, function() {
+          //do nothing on cancel
+          //$scope.status = 'You decided to keep your debt.';
+        });
+  };
+  //end md-dialog
+  //change apm credential in portal DB
   $scope.changeapmconfig = function () {
 
     var apmconfig = {};
