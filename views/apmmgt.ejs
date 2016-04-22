@@ -1,0 +1,29 @@
+<div layout="row" layout-align="center center" >
+      <md-card  >
+      <md-toolbar class="md-table-toolbar md-default" >
+        <div class="md-toolbar-tools" layout-align="center center">
+          <span>APM Management</span>
+        </div>
+      </md-toolbar>
+      <form name="apmconfigform" >
+        <div layout="column " layout-align="center center">
+            <md-input-container class="md-block" flex-gt-xs>
+              <label>APM IP:</label>
+              <input ng-model="apm.ip" >
+          </md-input-container>
+          <md-input-container class="md-block" flex-gt-xs>
+              <label>APM Username:</label>
+              <input ng-model="apm.username" >
+          </md-input-container>
+          <md-input-container class="md-block" flex-gt-xs>
+              <label>APM Password:</label>
+              <input ng-model="apm.password" >
+          </md-input-container>
+          <div flex="nogrow" layout-align="center center">
+            <md-button type="submit" class="md-primary" ng-class="{'md-raised md-hue-1': (newUrlform.$dirty && newUrlform.$valid) }" ng-click="changeapmconfig(apmconfigform)">Update APM config
+            </md-button>
+          </div>
+        </div>
+      </form>
+    </md-card>
+  </div>
