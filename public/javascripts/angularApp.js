@@ -166,15 +166,16 @@ function($stateProvider, $urlRouterProvider) {
 
     auth.register = function(user){
 
-      return $http.post('/register', user).success(function(data){
+      return $http.post('/register', user).then(function(data){
         //dont log on register, admin do register other users
        //  auth.saveToken(data.token);
       });
     };
 
     auth.logIn = function(user){
-      return $http.post('/login', user).success(function(data){
-        auth.saveToken(data.token);
+      return $http.post('/login', user).then(function(data){
+        console.log("token received : "+data.data.token)
+        auth.saveToken(data.data.token);
       });
     };
 
@@ -186,33 +187,50 @@ function($stateProvider, $urlRouterProvider) {
     return auth;
   }])
 
-  app.controller('AuthCtrl', ['$scope','$state','auth', 'groups', function($scope, $state, auth, groups  ){
+  app.controller('AuthCtrl', ['$scope','$state','auth', 'groups','$mdToast', function($scope, $state, auth, groups,$mdToast  ){
     $scope.user = {};
     $scope.user.isadmin =false;
     //we instentiate the groups table for select
     $scope.groups = groups.groups;
 
+    //md-toast function
+    showSimpleToast = function(position,message) {
+      $mdToast.show(
+        $mdToast.simple()
+          .textContent(message)
+          .position(position )
+          .hideDelay(3000)
+      );
+    };
 
     $scope.register = function(form){
-      auth.register($scope.user).error(function(error){
-        $scope.error = error;
-      }).then(function(){
+      auth.register($scope.user).then(function(){
+
         $scope.user.username="";
         $scope.user.password="";
         $scope.user.group="";
         $scope.user.isadmin=false;
+
+        showSimpleToast("top right","New User added to Portal DB")
         $state.go('register');
+      } , function(error){
+
+        showSimpleToast("top right",error.data.message)
+
+
       });
 
     };
 
     $scope.logIn = function(){
-      auth.logIn($scope.user).error(function(error){
-        $scope.error = error;
-      }).then(function(){
+      auth.logIn($scope.user).then(function(data){
         $state.go('index');
+
+      } , function(error){
+        $scope.error = error;
       });
     };
+
   }])
 
 app.controller('NavCtrl', ['$scope','auth',function($scope, auth){
@@ -224,52 +242,59 @@ app.controller('NavCtrl', ['$scope','auth',function($scope, auth){
 
 app.factory('urlcategories', ['$http', 'auth', function($http, auth){
   var o = {
-    urlcategories: []
+    urlcategories: ["{dummy empty}"]
   };
-  //create a category ------ a tester modifer pas fonctionnelle quoi
+  //create a category ------ to be tested, no functionnal , dont use ...
   o.create = function(urlcategory) {
-    return $http.post('/urlcategories', urlcategory, {headers: {Authorization: 'Bearer '+auth.getToken()}}).success(function(data){
+    return $http.post('/urlcategories', urlcategory, {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
       o.urlcategories.push(data);
     });
   };
   //get all categories
   o.getAll = function() {
-    return $http.get('/urlcategories', {headers: {Authorization: 'Bearer '+auth.getToken()}}).success(function(data){
-      angular.copy(data, o.urlcategories);
+      $http.get('/urlcategories', {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
+        angular.copy(data.data, o.urlcategories);
     });
 
   };
   //adding url to a category
   o.addurl = function(urlcategory,arrayid,url) {
-    return $http.put('/urlcategories/'+urlcategory._id,{url: url.name}, {headers: {Authorization: 'Bearer '+auth.getToken()}}).success(function(data){
-      angular.copy(data.urls,o.urlcategories[arrayid].urls);
+    return $http.put('/urlcategories/'+urlcategory._id,{url: url.name}, {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
+      angular.copy(data.data.urls,o.urlcategories[arrayid].urls);
     });
   }
   o.removeurl = function(urlcategory,arrayid,urlid) {
-    return $http.delete('/urlcategories/'+urlcategory._id+"/"+urlid, {headers: {Authorization: 'Bearer '+auth.getToken()}}).success(function(data){
-      angular.copy(data.urls,o.urlcategories[arrayid].urls);
+    return $http.delete('/urlcategories/'+urlcategory._id+"/"+urlid, {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
+      angular.copy(data.data.urls,o.urlcategories[arrayid].urls);
     });
   }
   o.pushcategorytoapm = function(category) {
 
-    return $http.get('/updateapmcategory/'+category, {headers: {Authorization: 'Bearer '+auth.getToken()}}).success(function(data){
-      if (data != "{OK}") {
-        showSimpleToast('top right',"Error, change not done");
+    return $http.get('/updateapmcategory/'+category, {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
+      if (data.data != "{OK}") {
+        showSimpleToast('top right',"Error, cannot update category on APM");
       } else {
-        showSimpleToast('top right',"Change done successfully");
+        showSimpleToast('top right',"Category updated successfully on APM");
       }
-    })};
+    }, function(data){
+        showSimpleToast('top right',"Error, Error, cannot update category on APM");
+    })
+  };
     o.pullcategorytoapm = function(category,arrayid) {
-      return $http.get('/getapmcategory/'+category, {headers: {Authorization: 'Bearer '+auth.getToken()}}).success(function(data){
-        console.log(JSON.stringify(data));
-        if (data != "{KO}") {
-          angular.copy(data,o.urlcategories[arrayid].urls)
+      return $http.get('/getapmcategory/'+category, {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
+        console.log(JSON.stringify(data.data));
+        if (data.data != "{KO}") {
+          angular.copy(data.data,o.urlcategories[arrayid].urls)
           //data is the category.urls part
-            showSimpleToast('top right',"Change done successfully");
+            showSimpleToast('top right',"Retrieval successfull from APM");
         } else {
           //something bad happened
+          //get working but error code back KO
             showSimpleToast('top right',"Cannot retrieve configuration from APM");
         }
+      }, function(data){
+          // get no working ?
+          showSimpleToast('top right',"Cannot retrieve configuration from APM");
       });
     };
 
@@ -348,16 +373,14 @@ app.controller('UrlcategoriesCtrl', [
         return 0;
       };// function isurlpresent
 
-      if(typeof ($scope.newurl.urlname) === "undefined" || $scope.newurl.urlname === '' || isurlpresent($scope.urlcategory.urls,$scope.newurl.urlname)) {
-
+      //validation
+      if( isurlpresent($scope.urlcategory.urls,$scope.newurl.urlname)) {
+        showSimpleToast("top right","Url already present")
         return;
       }
 
       //we call the function with urlcategory , urlcategory array number in urlcaterories, form parm containing url
       urlcategories.addurl($scope.urlcategory,$stateParams.id,{name:$scope.newurl.urlname });
-
-      $scope.newUrlform.$setValidity();
-      $scope.newUrlform.$setPristine();
       $scope.newurl.urlname="";
     //  $scope.newUrlform.$error=null;
 
@@ -374,13 +397,13 @@ app.factory('groups', ['$http', 'auth', function($http, auth){
   };
   //get all groups
   o.getAll = function() {
-    return $http.get('/groups', {headers: {Authorization: 'Bearer '+auth.getToken()}}).success(function(data){
-      angular.copy(data, o.groups);
+    return $http.get('/groups', {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
+      angular.copy(data.data, o.groups);
     });
   };
   o.addGroup = function(groupname) {
-    return $http.post('/groups',{newgroup: groupname}, {headers: {Authorization: 'Bearer '+auth.getToken()}}).success(function(data){
-      o.groups.push(data);
+    return $http.post('/groups',{newgroup: groupname}, {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
+      o.groups.push(data.data);
     });
   }
   o.categoryinGroup = function(groupname) {
@@ -391,8 +414,8 @@ app.factory('groups', ['$http', 'auth', function($http, auth){
 }]);
 
 app.controller('editGroupsCtrl', [
-'$scope','auth','groups','urlcategories','$state','$http',
-function($scope,auth,groups,urlcategories,$state,$http){
+'$scope','auth','groups','urlcategories','$state','$http','$mdToast',
+function($scope,auth,groups,urlcategories,$state,$http,$mdToast){
   //$scope.group=groups.groups;
   $scope.group = {"name":"error no group found",
                   "category":[]};
@@ -403,7 +426,15 @@ function($scope,auth,groups,urlcategories,$state,$http){
     break;
       }
   };
-
+  //md-toast function
+  showSimpleToast = function(position,message) {
+    $mdToast.show(
+      $mdToast.simple()
+        .textContent(message)
+        .position(position )
+        .hideDelay(3000)
+    );
+  };
   //console.log($scope.group.category);
 
   $scope.togglecat = function (item, list) {
@@ -416,8 +447,10 @@ function($scope,auth,groups,urlcategories,$state,$http){
       list.push(item);
     }
 
-    return $http.put('/groups/'+groups.groups[mygroup]._id,{category: list}, {headers: {Authorization: 'Bearer '+auth.getToken()}}).success(function(data){
-      angular.copy(data.category,groups.groups[mygroup].category);
+    return $http.put('/groups/'+groups.groups[mygroup]._id,{category: list}, {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
+      angular.copy(data.data.category,groups.groups[mygroup].category);
+    }, function(response){
+        showSimpleToast('top right',"Cannot update group in Portal DB");
     });
     console.log("after update");
     console.log("groups "+groups.groups[mygroup].category);
@@ -447,13 +480,23 @@ function($scope,auth,groups,$state){
 }]);
 
 app.controller('APMmgtCtrl', [
-'$scope','urlcategories','auth','$http',
-function($scope,urlcategories,auth, $http){
+'$scope','urlcategories','auth','$http','$mdToast',
+function($scope,urlcategories,auth, $http,$mdToast){
   $scope.apm={};
   $scope.apm.name ="myapm";
   $scope.apm.ip="192.168.142.15";
   $scope.apm.username="admin";
   $scope.apm.password="admin";
+
+  //md-toast function
+  showSimpleToast = function(position,message) {
+    $mdToast.show(
+      $mdToast.simple()
+        .textContent(message)
+        .position(position )
+        .hideDelay(3000)
+    );
+  };
 
   $scope.changeapmconfig = function () {
 
@@ -462,9 +505,12 @@ function($scope,urlcategories,auth, $http){
     apmconfig.ip = $scope.apm.ip;
     apmconfig.username=$scope.apm.username;
     apmconfig.password=$scope.apm.password;
-    return $http.post('/apmconfig', apmconfig, {headers: {Authorization: 'Bearer '+auth.getToken()}}).success(function(data){
-      console.log("resturn data "+JSON.stringify(data));
-    });
+    return $http.post('/apmconfig', apmconfig, {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
+      console.log("return data "+JSON.stringify(data));
+      showSimpleToast("top right","Change done to Portal DB")
+    }, function(response) {
+      showSimpleToast("top right","Error making change to Portal DB")
+    })  ;
   }
 
 

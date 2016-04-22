@@ -1,29 +1,56 @@
-<div layout="row" layout-align="center center" >
+<div flex layout="row"  layout-sm="column">
+  <div layout="row" layout-align="center center" >
       <md-card  >
-      <md-toolbar class="md-table-toolbar md-default" >
-        <div class="md-toolbar-tools" layout-align="center center">
-          <span>APM Management</span>
+        <md-toolbar class="md-table-toolbar md-default" >
+          <div class="md-toolbar-tools" layout-align="center center">
+            <span>APM Management</span>
+          </div>
+        </md-toolbar>
+        <form name="apmconfigform" >
+          <div layout="column " layout-align="center center">
+              <md-input-container class="md-block" flex-gt-xs>
+                <label>APM IP:</label>
+                <input ng-model="apm.ip" required >
+            </md-input-container>
+            <md-input-container class="md-block" flex-gt-xs>
+                <label>APM Username:</label>
+                <input ng-model="apm.username" required>
+            </md-input-container>
+            <md-input-container class="md-block" flex-gt-xs>
+                <label>APM Password:</label>
+                <input type="password" ng-model="apm.password" required >
+            </md-input-container>
+            <div flex="nogrow" layout-align="center center">
+              <md-button type="submit" class="md-primary" ng-class="{'md-raised md-hue-1': (apmconfigform.$dirty && apmconfigform.$valid) }" ng-click="apmconfigform.$valid && changeapmconfig(apmconfigform)">Update APM config
+              </md-button>
+            </div>
+          </div>
+        </form>
+      </md-card>
+  </div>
+  <div>
+    <md-card  style="min-width:0px;max-width:200px;">
+      <md-toolbar   class="md-table-toolbar md-default" >
+        <div class="md-toolbar-tools" >
+            <span>Bulk changes</span>
         </div>
       </md-toolbar>
-      <form name="apmconfigform" >
-        <div layout="column " layout-align="center center">
-            <md-input-container class="md-block" flex-gt-xs>
-              <label>APM IP:</label>
-              <input ng-model="apm.ip" >
-          </md-input-container>
-          <md-input-container class="md-block" flex-gt-xs>
-              <label>APM Username:</label>
-              <input ng-model="apm.username" >
-          </md-input-container>
-          <md-input-container class="md-block" flex-gt-xs>
-              <label>APM Password:</label>
-              <input ng-model="apm.password" >
-          </md-input-container>
-          <div flex="nogrow" layout-align="center center">
-            <md-button type="submit" class="md-primary" ng-class="{'md-raised md-hue-1': (newUrlform.$dirty && newUrlform.$valid) }" ng-click="changeapmconfig(apmconfigform)">Update APM config
-            </md-button>
-          </div>
-        </div>
-      </form>
+      <md-content  flex="auto" layout-padding>
+        
+      </md-content>
     </md-card>
   </div>
+  <div>
+    <md-card  style="min-width:0px;max-width:200px;">
+      <md-toolbar   class="md-table-toolbar md-default" >
+        <div class="md-toolbar-tools" >
+            <span>Hints</span>
+        </div>
+      </md-toolbar>
+      <md-content  flex="auto" layout-padding>
+        <p class="md-body-1">Here we setup apm access information to store in the Portal DB</p>
+        <p class="md-body-1">Password is not encrypted in the Portal DB</p>
+      </md-content>
+    </md-card>
+  </div>
+</div>

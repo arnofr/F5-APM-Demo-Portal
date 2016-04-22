@@ -80,7 +80,7 @@ router.post('/login', function(req, res, next){
 });
 
 router.post('/register', function(req, res, next){
-  if(!req.body.username || !req.body.password){
+  if(!req.body.username || !req.body.password || !req.body.group){
     return res.status(400).json({message: 'Please fill out all fields'});
   }
 
@@ -90,7 +90,12 @@ router.post('/register', function(req, res, next){
   user.isadmin = req.body.isadmin;
   user.setPassword(req.body.password);
   user.save(function (err){
-    if(err){ return next(err); }
+    if(err){
+      console.log("Error Registering new user in DB");
+      console.log(JSON.stringify(err));
+      if (err.code == 11000) {return res.status(400).json({message: 'User already exists in DB'})}
+      else {return next(err)};
+    }
     return res.json({token: user.generateJWT()})
   });
 } );
