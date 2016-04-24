@@ -192,7 +192,7 @@ function($stateProvider, $urlRouterProvider) {
     $scope.user.isadmin =false;
     //we instentiate the groups table for select
     $scope.groups = groups.groups;
-
+    $scope.showhint=false;
     //md-toast function
     showSimpleToast = function(position,message) {
       $mdToast.show(
@@ -284,7 +284,6 @@ app.factory('urlcategories', ['$http', 'auth', function($http, auth){
       return $http.get('/getapmcategory/'+category, {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
         if (data.data != "{KO}") {
           angular.copy(data.data,o.urlcategories[arrayid].urls)
-          console.log(JSON.stringify(data.data));
           //data is the category.urls part
             showSimpleToast('top right',"Retrieval successfull from APM");
         } else {
@@ -308,7 +307,7 @@ app.controller('UrlcategoriesCtrl', [
     $scope.newurl={};
     $scope.newurl.urlname="";
     $scope.urlalert="";
-
+    $scope.showhint=false;
     //md-toast function
     showSimpleToast = function(position,message) {
       $mdToast.show(
@@ -388,7 +387,6 @@ app.controller('UrlcategoriesCtrl', [
     };
     $scope.removeUrl = function(urlid){
 
-      console.log("urlid "+urlid);
       urlcategories.removeurl($scope.urlcategory,$stateParams.id,urlid);
       $scope.newurl.name="";
     };
@@ -485,7 +483,8 @@ function($scope,urlcategories,auth, $http,$mdToast,$mdDialog){
   $scope.apm.ip="192.168.142.15";
   $scope.apm.username="admin";
   $scope.apm.password="admin";
-
+  $scope.showhint=false;
+  
   //md-toast function
   showSimpleToast = function(position,message) {
     $mdToast.show(

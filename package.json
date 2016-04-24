@@ -5,7 +5,7 @@
     "name": "Arnaud Lemaire",
     "email": "a.lemaire@f5.com"
   },
-  "version": "1.0.0",
+  "version": "1.0.1",
   "scripts": {
     "start": "supervisor -i /node_modules ./bin/www"
   },

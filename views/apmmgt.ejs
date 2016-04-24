@@ -1,5 +1,5 @@
-<div flex layout="row"  layout-sm="column">
-  <div layout="row" layout-align="center center" >
+<div flex layout="row"  layout-sm="column" layout-align="top left">
+  <div >
       <md-card>
         <md-toolbar class="md-table-toolbar md-default" >
           <div class="md-toolbar-tools" layout-align="center center">
@@ -45,15 +45,22 @@
     </md-card>
   </div>
   <div>
-    <md-card  style="min-width:0px;max-width:200px;">
+    <md-button class="md-primary" ng-click="showhint=true" ng-hide="showhint">
+      <md-icon>&#xE8FD;</md-icon >
+    </md-button>
+    <md-card  style="min-width:0px;max-width:200px;" ng-show="showhint">
       <md-toolbar   class="md-table-toolbar md-default" >
         <div class="md-toolbar-tools" >
             <span>Hints</span>
+            <md-button class="md-primary" ng-click="showhint=false" >
+              <md-icon style="color:rgb(63,81,181);">&#xE8FD;</md-icon >
+            </md-button>
         </div>
       </md-toolbar>
       <md-content  flex="auto" layout-padding>
         <p class="md-body-1">Here we setup apm access information to store in the Portal DB</p>
         <p class="md-body-1">Password is not encrypted in the Portal DB</p>
+        <p class="md-body-1">Displayed configuration is not updated when changed</p>
         <p class="md-body-1">When Bulk download is used all Portal category groups are reset (to be done)</p>
       </md-content>
     </md-card>

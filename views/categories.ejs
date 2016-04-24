@@ -17,7 +17,7 @@
           <tbody md-body>
             <tr md-row  ng-repeat="urlcategory in urlcategories">
                <td md-cell>{{$index+1}}</td>
-               <td md-cell><md-button class="md-primary" href='#/category/urlcategories/{{$index}}'>{{urlcategory.name}}</md-button></td>
+               <td md-cell><md-button aria-label="edit Category" class="md-primary" href='#/category/urlcategories/{{$index}}'>{{urlcategory.name}}</md-button></td>
              </tr>
            </tbody>
         </table>

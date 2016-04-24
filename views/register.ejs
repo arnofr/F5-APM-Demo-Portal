@@ -34,10 +34,16 @@
     </md-card>
   </div>
   <div>
-    <md-card  style="min-width:0px;max-width:200px;">
+    <md-button class="md-primary" ng-click="showhint=true" ng-hide="showhint">
+      <md-icon >&#xE8FD;</md-icon >
+    </md-button>
+    <md-card  style="min-width:0px;max-width:200px;" ng-show="showhint">
       <md-toolbar   class="md-table-toolbar md-default" >
         <div class="md-toolbar-tools" >
             <span>Hints</span>
+            <md-button class="md-primary" ng-click="showhint=false" >
+              <md-icon style="color:rgb(63,81,181);">&#xE8FD;</md-icon >
+            </md-button>
         </div>
       </md-toolbar>
       <md-content  flex="auto" layout-padding>

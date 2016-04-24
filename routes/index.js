@@ -216,7 +216,7 @@ router.get('/getapmcategory/:urlcategory', auth, function(req, res, next) {
   });
 });
 
-//retrieve all APM categories
+//bulk operation retrieve all APM categories and overwrite
 router.get('/getapmcategories', auth, function(req, res, next) {
   APM.findOne({'name':"myapm"},  function (err, apm) {
     if (err) { return (JSON.stringify(err)) }
@@ -264,7 +264,7 @@ router.get('/getapmcategories', auth, function(req, res, next) {
             });
           }, function(){
             //al done
-            //updating allcategories group
+            //updating allcategories group with acces to all categories
             var allcategoriesgroup =[];
             for (var i = 0; i < urlcategories.length; i++) {
               allcategoriesgroup.push(urlcategories[i].name);
@@ -274,7 +274,12 @@ router.get('/getapmcategories', auth, function(req, res, next) {
               {  safe: true, upsert: true, new: true }, //options new : true returns modified doc
                  function(err) {
                     if(err){ return next(err); }
-                    res.json("{Portal DB updated}");
+                    Group.update({"name":{ $ne : "allcategories"}}, {"category": []}, {"multi": 'true'}, function(err) {
+                      //need to modify existing other groups
+                      if(err){ return next(err); }
+                      res.json("{Portal DB updated}");
+                    });
+
                  }
               );
 
