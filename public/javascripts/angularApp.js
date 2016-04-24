@@ -296,7 +296,7 @@ app.factory('urlcategories', ['$http', 'auth', function($http, auth){
           showSimpleToast('top right',"Cannot retrieve configuration from APM");
       });
     };
-    console.log("factory o: "+JSON.stringify(o.urlcategories));
+
   return o;
 }]);
 
@@ -417,7 +417,7 @@ app.controller('editGroupsCtrl', [
 function($scope,auth,groups,urlcategories,$state,$http,$mdToast){
   $scope.group = {"name":"error no group found",
                   "category":[]};
-  console.log(urlcategories.urlcategories);
+  
   for(var mygroup in groups.groups) {
     if (groups.groups[mygroup].name == $state.params.id ) {
       $scope.group=groups.groups[mygroup];
