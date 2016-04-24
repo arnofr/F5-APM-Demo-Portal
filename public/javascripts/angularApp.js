@@ -77,6 +77,11 @@ function($stateProvider, $urlRouterProvider) {
       url: '/groupcategories/{id}',
       templateUrl: '/groupcategory.html',
       controller: 'editGroupsCtrl',
+      resolve: {
+        categoriesPromise: ['urlcategories', function(urlcategories){
+          return urlcategories.getAll();
+        }]
+      },
       onEnter: ['$state', 'auth', 'groups', function($state, auth,groups){
         if(!auth.isLoggedIn()){
           $state.go('login');
@@ -291,7 +296,7 @@ app.factory('urlcategories', ['$http', 'auth', function($http, auth){
           showSimpleToast('top right',"Cannot retrieve configuration from APM");
       });
     };
-
+    console.log("factory o: "+JSON.stringify(o.urlcategories));
   return o;
 }]);
 
@@ -403,6 +408,7 @@ app.factory('groups', ['$http', 'auth', function($http, auth){
   o.categoryinGroup = function(groupname) {
 
   };
+
   return o;
 }]);
 
@@ -411,12 +417,14 @@ app.controller('editGroupsCtrl', [
 function($scope,auth,groups,urlcategories,$state,$http,$mdToast){
   $scope.group = {"name":"error no group found",
                   "category":[]};
+  console.log(urlcategories.urlcategories);
   for(var mygroup in groups.groups) {
     if (groups.groups[mygroup].name == $state.params.id ) {
       $scope.group=groups.groups[mygroup];
     break;
       }
   };
+
   //md-toast function
   showSimpleToast = function(position,message) {
     $mdToast.show(
@@ -447,10 +455,11 @@ function($scope,auth,groups,urlcategories,$state,$http,$mdToast){
   };
 }]);
 
-app.controller('GroupsCtrl', [
-'$scope','auth','groups','$state',
-function($scope,auth,groups,$state){
+app.controller('GroupsCtrl',[
+'$scope','auth','groups','$state','urlcategories' ,
+function($scope,auth,groups,$state,urlcategories ){
   $scope.groups=groups.groups;
+
 
   $scope.addGroup = function(){
     groups.addGroup($scope.newgroup.groupname).error(function(error){
@@ -483,7 +492,6 @@ function($scope,urlcategories,auth, $http,$mdToast,$mdDialog){
     );
   };
 
-
   //md-dialog to push all category from apm
   $scope.showConfirmbulkapmpull = function(ev) {
     var confirm = $mdDialog.confirm()
@@ -495,13 +503,11 @@ function($scope,urlcategories,auth, $http,$mdToast,$mdDialog){
           .cancel('Cancel');
       $mdDialog.show(confirm).then(function() {
           //if confirm
-          return $http.get('/getapmcategories', {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
-            showSimpleToast("top right","Change done to Portal DB")
+          $http.get('/getapmcategories', {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
             if (data.data == "{KO}") {
               showSimpleToast("top right","Error making change to Portal DB")
             }
-
-            angular.copy(data.data, urlcategories.urlcategories);
+            showSimpleToast("top right","Change done to Portal DB")
           }, function(response) {
             showSimpleToast("top right","Error making change to Portal DB")
           })  ;

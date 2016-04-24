@@ -1,6 +1,22 @@
+install nodejs tested with 4.4.2 https://nodejs.org/en/download/package-manager/
+install mongoDB, tested with 3.2.4 https://docs.mongodb.org/manual/tutorial/
 
-1. install mongoDB, tested with 3.2.4
-2. npm install
-3. npm start
+optional : install mongo-express
+ npm install mongo-express form webbase management db interface
 
-following instruction will come later
+start mongodb
+create database apmportal
+before modify apmconfig.json with your apm config infos.
+in mongo deb repository
+mongoimport --db apmportal --collection users  --drop --file "c:\F5-APM-Demo-Portal\default mongodb setup\users.json"
+mongoimport --db apmportal --collection groups  --drop --file "c:\F5-APM-Demo-Portal\default mongodb setup\groups.json"
+mongoimport --db apmportal --collection apmconfig  --drop --file "c:\F5-APM-Demo-Portal\default mongodb setup\apmconfig.json"
+mongoimport --db apmportal --collection url-category  --drop --file "c:\F5-APM-Demo-Portal\default mongodb setup\url-category.json"
+
+npm start in F5-APM-Demo-Portal folder
+connect to portal 127.0.0.1:3000
+
+log with admin/admin
+
+go  to apm management menu
+bulk import to retrieve existing config

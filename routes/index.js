@@ -13,6 +13,7 @@ var passport = require('passport');
 var jwt = require('express-jwt');
 var auth = jwt({secret: 'MYDIRTYSECRETSTATICINMYCODE', userProperty: 'payload'});
 var request = require('request');
+var async = require('async');
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -239,28 +240,46 @@ router.get('/getapmcategories', auth, function(req, res, next) {
         //now overwritting mongodb
         //droping the table
         //no error checking here
+
+        var urlcategories=[];
+        console.log("before :"+urlcategories);
         Urlcategory.collection.drop( function(err) {
           console.log('MongoDB collection Urlcategory dropped');
           //now inserting
 
-          for(var tmpcategory in tmp) {
+          async.each (tmp, function(tmpcategory, next){
             newcategory = new Urlcategory();
-            newcategory.name             = tmp[tmpcategory].name;
-            newcategory.catNumber        = tmp[tmpcategory].catNumber;
-            newcategory.defaultAction    = tmp[tmpcategory].defaultAction;
-            newcategory.displayName      = tmp[tmpcategory].displayName;
-            newcategory.isCustom         = tmp[tmpcategory].isCustom;
-            newcategory.isRecategory     = tmp[tmpcategory].isRecategory;
-            newcategory.parentCatNumber  = tmp[tmpcategory].parentCatNumber;
-            newcategory.severityLevel    = tmp[tmpcategory].severityLevel;
-            newcategory.urls             = tmp[tmpcategory].urls
-            newcategory.save();
-          };
-          //we could return tmp, but mongoose is cleaner ?
-          Urlcategory.find( function(err, urlcategories){
-            if(err){   return next(err); }
-              res.json(urlcategories);
+            newcategory.name             = tmpcategory.name;
+            newcategory.catNumber        = tmpcategory.catNumber;
+            newcategory.defaultAction    = tmpcategory.defaultAction;
+            newcategory.displayName      = tmpcategory.displayName;
+            newcategory.isCustom         = tmpcategory.isCustom;
+            newcategory.isRecategory     = tmpcategory.isRecategory;
+            newcategory.parentCatNumber  = tmpcategory.parentCatNumber;
+            newcategory.severityLevel    = tmpcategory.severityLevel;
+            newcategory.urls             = tmpcategory.urls
+            newcategory.save( function(err,newcategory){
+              urlcategories.push(newcategory);
+              next();
+            });
+          }, function(){
+            //al done
+            //updating allcategories group
+            var allcategoriesgroup =[];
+            for (var i = 0; i < urlcategories.length; i++) {
+              allcategoriesgroup.push(urlcategories[i].name);
+            }
+            Group.findOneAndUpdate({ 'name': "allcategories"},
+              { $set: {"category": allcategoriesgroup }},       //update to be done
+              {  safe: true, upsert: true, new: true }, //options new : true returns modified doc
+                 function(err) {
+                    if(err){ return next(err); }
+                    res.json("{Portal DB updated}");
+                 }
+              );
+
           });
+
           //easiest but this is acessing mongodb directly without going throu mongoose
           //thus urls in category doesn t have _id which breacks angularapp logic so far
         /*  Urlcategory.collection.insert( tmp, function(err) {
@@ -269,9 +288,6 @@ router.get('/getapmcategories', auth, function(req, res, next) {
             //now need to update categrory groups
           })*/
         });
-
-
-
         } else {
           console.log("error found while retrieving category from APM ...");
           res.json("{KO}");
