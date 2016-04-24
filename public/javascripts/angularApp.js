@@ -284,6 +284,7 @@ app.factory('urlcategories', ['$http', 'auth', function($http, auth){
       return $http.get('/getapmcategory/'+category, {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
         if (data.data != "{KO}") {
           angular.copy(data.data,o.urlcategories[arrayid].urls)
+          console.log(JSON.stringify(data.data));
           //data is the category.urls part
             showSimpleToast('top right',"Retrieval successfull from APM");
         } else {
@@ -386,10 +387,13 @@ app.controller('UrlcategoriesCtrl', [
 
     };
     $scope.removeUrl = function(urlid){
+
+      console.log("urlid "+urlid);
       urlcategories.removeurl($scope.urlcategory,$stateParams.id,urlid);
       $scope.newurl.name="";
     };
 }]);
+
 app.factory('groups', ['$http', 'auth', function($http, auth){
   var o = {
     groups :[]
@@ -417,7 +421,7 @@ app.controller('editGroupsCtrl', [
 function($scope,auth,groups,urlcategories,$state,$http,$mdToast){
   $scope.group = {"name":"error no group found",
                   "category":[]};
-  
+
   for(var mygroup in groups.groups) {
     if (groups.groups[mygroup].name == $state.params.id ) {
       $scope.group=groups.groups[mygroup];

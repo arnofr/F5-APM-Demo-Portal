@@ -207,7 +207,7 @@ router.get('/getapmcategory/:urlcategory', auth, function(req, res, next) {
           req.urlcategory.urls=JSON.parse(body).urls;
           req.urlcategory.save();
           //sending response
-          res.json(JSON.parse(body).urls);
+          res.json(req.urlcategory.urls);
         } else {
           console.log("error found while retrieving category from APM ...");
           res.json("{KO}");
