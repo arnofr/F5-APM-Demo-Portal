@@ -639,17 +639,13 @@ app.controller('editGroupsCtrl', [
   };
   //acl management
   $scope.toggleacl = function (item, list) {
-    console.log("toggleacl");
     var idx = list.indexOf(item);
     if (idx > -1) {
-      console.log("splice");
       list.splice(idx, 1);
     }
     else {
-      console.log("push");
       list.push(item);
     }
-    console.log("list:"+ list);
     return $http.put('/groups/'+groups.groups[mygroup]._id,{acl: list}, {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
       angular.copy(data.data.acl,groups.groups[mygroup].acl);
     }, function(response){
@@ -668,9 +664,8 @@ app.controller('GroupsCtrl',[
     $scope.groups=groups.groups;
 
     $scope.addGroup = function(){
-      groups.addGroup($scope.newgroup.groupname).error(function(error){
-        $scope.error = error;
-      }).then(function(){
+      groups.addGroup($scope.newgroup.groupname).then(function(error){
+        if (error) {$scope.error = error; return}
         $scope.newgroup.groupname = "";
         $state.go('editgroups');
       });
