@@ -12,6 +12,7 @@ optional : install mongo-express
 5) create database apmportal :
 
 in mongo deb repository
+
 mongoimport --db apmportal --collection users  --drop --file "c:\F5-APM-Demo-Portal\default mongodb setup\users.json"
 
 mongoimport --db apmportal --collection groups  --drop --file "c:\F5-APM-Demo-Portal\default mongodb setup\groups.json"
