@@ -746,7 +746,7 @@ app.controller('MainCtrl', [
   function($scope,urlcategories,acls,auth){
 
   $scope.urlcategories = urlcategories.urlcategories;
-  $scope.menufabisOpen = false;
+  $scope.menufabisOpen = true;
   $scope.isAdmin = auth.isAdmin;
 
   $scope.acls = acls.acls;
