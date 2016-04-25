@@ -450,24 +450,12 @@ app.controller('ACLCtrl', [
 
 
     $scope.addAcl = function(form){
-      //checing if requested url already exists
-      //blocking to be modified
-      /*function isurlpresent(arrayofjsonurl,lookedurl) {
-        for(var k in arrayofjsonurl) {
-          if(arrayofjsonurl[k].name == lookedurl) {
-            $scope.urlalert="The requested url is already present in this category";
-            return 1;
-          }
-        }
 
-        return 0;
-      };// function isurlpresent
+      //validation for destport
+      if($scope.newacl.dstEndPort=="") {
+        $scope.newacl.dstEndPort=$scope.newacl.dstStartPort;
+      }
 
-      //validation
-      if( isurlpresent($scope.urlcategory.urls,$scope.newurl.urlname)) {
-        showSimpleToast("top right","Url already present")
-        return;
-      }*/
 
       //we call the function with acl , acl entry array number in acls, form parm containing new acl entry definition
       acls.addacl($scope.acl,$stateParams.id,{"dstSubnet" : $scope.newacl.dstSubnet, "dstStartPort" : $scope.newacl.dstStartPort, "dstEndPort": $scope.newacl.dstEndPort });
