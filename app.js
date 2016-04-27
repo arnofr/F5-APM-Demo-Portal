@@ -18,6 +18,7 @@ var passport = require('passport');
 require('./models/Urlcategory');
 require('./models/User');
 require('./models/Apm');
+require('./models/Acls');
 require('./config/passport');
 
 mongoose.set('debug',true); //option to debug mongoose calls to mongodb

@@ -31,7 +31,32 @@ function($stateProvider, $urlRouterProvider) {
       }
     }]
   })
+  .state('acls', {
+    url: '/acls',
+    templateUrl: 'acls.html',
+    controller: 'MainCtrl',
+    resolve: {
+      categoriesPromise: ['acls', function(acls){
+        return acls.getAll();
+      }]
+    },
+    onEnter: ['$state', 'auth', function($state, auth){
+      if(!auth.isLoggedIn()){
+        $state.go('login');
+      }
+    }]
 
+  })
+  .state('acls.editacl', {
+    url: '/editacl/{id}',
+    templateUrl: '/editacl.html',
+    controller: 'ACLCtrl',
+    onEnter: ['$state', 'auth', function($state, auth){
+      if(!auth.isLoggedIn()){
+        $state.go('login');
+      }
+    }]
+  })
     .state('category', {
       url: '/category',
       templateUrl: 'categories.html',
@@ -80,7 +105,10 @@ function($stateProvider, $urlRouterProvider) {
       resolve: {
         categoriesPromise: ['urlcategories', function(urlcategories){
           return urlcategories.getAll();
-        }]
+        }],
+        aclsPromise: ['acls', function(acls){
+          return acls.getAll();
+        }],
       },
       onEnter: ['$state', 'auth', 'groups', function($state, auth,groups){
         if(!auth.isLoggedIn()){
@@ -124,7 +152,7 @@ function($stateProvider, $urlRouterProvider) {
   }]);
 
   //managing user authentication
-  app.factory('auth', ['$http', '$window', function($http, $window){
+app.factory('auth', ['$http', '$window', function($http, $window){
     var auth = {};
     auth.saveToken = function (token){
      $window.localStorage['apm-demoportal-token'] = token;
@@ -187,12 +215,12 @@ function($stateProvider, $urlRouterProvider) {
     return auth;
   }])
 
-  app.controller('AuthCtrl', ['$scope','$state','auth', 'groups','$mdToast', function($scope, $state, auth, groups,$mdToast  ){
-    $scope.user = {};
-    $scope.user.isadmin =false;
-    //we instentiate the groups table for select
-    $scope.groups = groups.groups;
-    $scope.showhint=false;
+app.controller('AuthCtrl', ['$scope','$state','auth', 'groups','$mdToast', function($scope, $state, auth, groups,$mdToast  ){
+      $scope.user = {};
+      $scope.user.isadmin =false;
+      //we instentiate the groups table for select
+      $scope.groups = groups.groups;
+      $scope.showhint=false;
     //md-toast function
     showSimpleToast = function(position,message) {
       $mdToast.show(
@@ -280,7 +308,7 @@ app.factory('urlcategories', ['$http', 'auth', function($http, auth){
         showSimpleToast('top right',"Error, Error, cannot update category on APM");
     })
   };
-    o.pullcategorytoapm = function(category,arrayid) {
+    o.pullcategoryfromapm = function(category,arrayid) {
       return $http.get('/getapmcategory/'+category, {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
         if (data.data != "{KO}") {
           angular.copy(data.data,o.urlcategories[arrayid].urls)
@@ -298,6 +326,147 @@ app.factory('urlcategories', ['$http', 'auth', function($http, auth){
     };
 
   return o;
+}]);
+
+app.factory('acls', ['$http', 'auth', function($http, auth){
+  var o = {
+    acls: ["{dummy empty}"]
+  };
+
+  //get all acls
+  //ok
+  o.getAll = function() {
+      $http.get('/acls', {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
+        angular.copy(data.data, o.acls);
+    });
+
+  };
+  //adding acl to an acl
+  //ok
+  o.addacl = function(acl,arrayid,newaclparamsjson) {
+    //{"dstSubnet" : $scope.newacl.dstSubnet, "dstStartPort" : $scope.newacl.dstStartPort, "dstEndPort": $scope.newacl.dstEndPort }
+    return $http.put('/acls/'+acl._id,newaclparamsjson, {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
+
+      angular.copy(data.data,o.acls[arrayid]);
+    });
+  }
+  //remove an acl entry
+  //ok
+  o.removeaclentry = function(acl,arrayid,entryid) {
+    return $http.delete('/acls/'+acl._id+"/"+entryid, {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
+      angular.copy(data.data.entries,o.acls[arrayid].entries);
+    });
+  }
+  //ok
+  o.pushacltoapm = function(acl) {
+    return $http.get('/updateapmacl/'+acl, {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
+      if (data.data != "{OK}") {
+        showSimpleToast('top right',"Error, cannot update ACL on APM");
+      } else {
+        showSimpleToast('top right',"ACL updated successfully on APM");
+      }
+    }, function(data){
+        showSimpleToast('top right',"Error, Error, cannot update ACL on APM");
+    })
+  };
+    o.pullaclfromapm = function(acl,arrayid) {
+      return $http.get('/getapmacl/'+acl, {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
+        if (data.data != "{KO}") {
+          angular.copy(data.data,o.acls[arrayid].entries)
+          //data is the category.urls part
+            showSimpleToast('top right',"Retrieval successfull from APM");
+        } else {
+          //something bad happened
+          //get working but error code back KO
+            showSimpleToast('top right',"Cannot retrieve configuration from APM");
+        }
+      }, function(data){
+          // get no working ?
+          showSimpleToast('top right',"Cannot retrieve configuration from APM");
+      });
+    };
+
+  return o;
+}]);
+
+app.controller('ACLCtrl', [
+  '$scope',  '$stateParams',  'acls',  '$animate',  'auth', '$mdDialog','$mdToast',
+  function($scope, $stateParams, acls, $animate,auth,$mdDialog,$mdToast){
+    $scope.acl = acls.acls[$stateParams.id];
+    $scope.newacl={};
+    $scope.newacl.dstSubnet="";
+    $scope.newacl.dstEndPort="";
+    $scope.newacl.dstStartPort="";
+    $scope.aclalert="";
+    $scope.showhint=false;
+    //md-toast function
+    showSimpleToast = function(position,message) {
+      $mdToast.show(
+        $mdToast.simple()
+          .textContent(message)
+          .position(position )
+          .hideDelay(3000)
+      );
+    };
+    //md-dialog to push to apm
+    $scope.showConfirmpush = function(ev) {
+      var confirm = $mdDialog.confirm()
+            .title('Update '+ $scope.acl.name+' to APM')
+            .textContent('This will overwrite this APM ACL configuration')
+            .ariaLabel('Push to APM')
+            .targetEvent(ev)
+            .ok("Let's do it!")
+            .cancel('Cancel');
+        $mdDialog.show(confirm).then(function() {
+            //if confirm
+            acls.pushacltoapm($scope.acl._id);
+
+        }, function() {
+            //do nothing on cancel
+            //$scope.status = 'You decided to keep your debt.';
+          });
+    };
+    //end md-dialog
+    //md-dialog to pull from apm
+    $scope.showConfirmpull = function(ev) {
+
+      var confirm = $mdDialog.confirm()
+            .title('Update '+ $scope.acl.name+' from APM')
+            .textContent('This will overwrite this acl configuration')
+            .ariaLabel('Pull from APM')
+            .targetEvent(ev)
+            .ok("Let's do it!")
+            .cancel('Cancel');
+        $mdDialog.show(confirm).then(function() {
+            //if confirm
+            acls.pullaclfromapm($scope.acl._id,$stateParams.id);
+
+        }, function() {
+          //do nothing on cancel
+          //$scope.status = 'You decided to keep your debt.';
+        });
+    };
+    //end md-dialog
+
+
+    $scope.addAcl = function(form){
+
+      //validation for destport
+      if($scope.newacl.dstEndPort=="") {
+        $scope.newacl.dstEndPort=$scope.newacl.dstStartPort;
+      }
+
+
+      //we call the function with acl , acl entry array number in acls, form parm containing new acl entry definition
+      acls.addacl($scope.acl,$stateParams.id,{"dstSubnet" : $scope.newacl.dstSubnet, "dstStartPort" : $scope.newacl.dstStartPort, "dstEndPort": $scope.newacl.dstEndPort });
+      $scope.newacl.dstSubnet="";
+      $scope.newacl.dstStartPort="";
+      $scope.newacl.dstEndPort="";
+
+    };
+    $scope.removeAclentry = function(aclid){
+      acls.removeaclentry($scope.acl,$stateParams.id,aclid);
+    };
 }]);
 
 app.controller('UrlcategoriesCtrl', [
@@ -342,13 +511,13 @@ app.controller('UrlcategoriesCtrl', [
       var confirm = $mdDialog.confirm()
             .title('Update '+ $scope.urlcategory.name+' from APM')
             .textContent('This will overwrite this category configuration')
-            .ariaLabel('Pull to APM')
+            .ariaLabel('Pull from APM')
             .targetEvent(ev)
             .ok("Let's do it!")
             .cancel('Cancel');
         $mdDialog.show(confirm).then(function() {
             //if confirm
-            urlcategories.pullcategorytoapm($scope.urlcategory._id,$stateParams.id);
+            urlcategories.pullcategoryfromapm($scope.urlcategory._id,$stateParams.id);
 
         }, function() {
           //do nothing on cancel
@@ -415,17 +584,18 @@ app.factory('groups', ['$http', 'auth', function($http, auth){
 }]);
 
 app.controller('editGroupsCtrl', [
-'$scope','auth','groups','urlcategories','$state','$http','$mdToast',
-function($scope,auth,groups,urlcategories,$state,$http,$mdToast){
-  $scope.group = {"name":"error no group found",
-                  "category":[]};
+  '$scope','auth','groups','urlcategories','acls','$state','$http','$mdToast',
+  function($scope,auth,groups,urlcategories,acls,$state,$http,$mdToast){
+    $scope.group = {"name":"error no group found",
+                    "category":[],
+                    "acl":[]};
 
-  for(var mygroup in groups.groups) {
-    if (groups.groups[mygroup].name == $state.params.id ) {
-      $scope.group=groups.groups[mygroup];
-    break;
-      }
-  };
+    for(var mygroup in groups.groups) {
+      if (groups.groups[mygroup].name == $state.params.id ) {
+        $scope.group=groups.groups[mygroup];
+      break;
+        }
+    };
 
   //md-toast function
   showSimpleToast = function(position,message) {
@@ -436,7 +606,7 @@ function($scope,auth,groups,urlcategories,$state,$http,$mdToast){
         .hideDelay(3000)
     );
   };
-
+ //category management
   $scope.togglecat = function (item, list) {
     var idx = list.indexOf(item);
     if (idx > -1) {
@@ -455,52 +625,67 @@ function($scope,auth,groups,urlcategories,$state,$http,$mdToast){
   $scope.existscat = function (item, list) {
     return list.indexOf(item) > -1;
   };
+  //acl management
+  $scope.toggleacl = function (item, list) {
+    var idx = list.indexOf(item);
+    if (idx > -1) {
+      list.splice(idx, 1);
+    }
+    else {
+      list.push(item);
+    }
+    return $http.put('/groups/'+groups.groups[mygroup]._id,{acl: list}, {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
+      angular.copy(data.data.acl,groups.groups[mygroup].acl);
+    }, function(response){
+        showSimpleToast('top right',"Cannot update acl in Portal DB");
+    });
+  };
+  $scope.existsacl = function (item, list) {
+
+    return list.indexOf(item) > -1;
+  };
 }]);
 
 app.controller('GroupsCtrl',[
-'$scope','auth','groups','$state','urlcategories' ,
-function($scope,auth,groups,$state,urlcategories ){
-  $scope.groups=groups.groups;
+  '$scope','auth','groups','$state','urlcategories' ,
+  function($scope,auth,groups,$state,urlcategories ){
+    $scope.groups=groups.groups;
 
-
-  $scope.addGroup = function(){
-    groups.addGroup($scope.newgroup.groupname).error(function(error){
-      $scope.error = error;
-
-    }).then(function(){
-
-      $state.go('editgroups');
-    });
-  };
-
+    $scope.addGroup = function(){
+      groups.addGroup($scope.newgroup.groupname).then(function(error){
+        if (error) {$scope.error = error; return}
+        $scope.newgroup.groupname = "";
+        $state.go('editgroups');
+      });
+    };
 }]);
 
 app.controller('APMmgtCtrl', [
-'$scope','urlcategories','auth','$http','$mdToast','$mdDialog',
-function($scope,urlcategories,auth, $http,$mdToast,$mdDialog){
-  $scope.apm={};
-  $scope.apm.name ="myapm";
-  $scope.apm.ip="192.168.142.15";
-  $scope.apm.username="admin";
-  $scope.apm.password="admin";
-  $scope.showhint=false;
-  
-  //md-toast function
-  showSimpleToast = function(position,message) {
-    $mdToast.show(
-      $mdToast.simple()
-        .textContent(message)
-        .position(position )
-        .hideDelay(3000)
-    );
-  };
+  '$scope','urlcategories','auth','$http','$mdToast','$mdDialog',
+  function($scope,urlcategories,auth, $http,$mdToast,$mdDialog){
+    $scope.apm={};
+    $scope.apm.name ="myapm";
+    $scope.apm.ip="192.168.142.15";
+    $scope.apm.username="admin";
+    $scope.apm.password="admin";
+    $scope.showhint=false;
 
-  //md-dialog to push all category from apm
+    //md-toast function
+    showSimpleToast = function(position,message) {
+      $mdToast.show(
+        $mdToast.simple()
+          .textContent(message)
+          .position(position )
+          .hideDelay(3000)
+      );
+    };
+
+  //md-dialog to pull all category/acl from apm
   $scope.showConfirmbulkapmpull = function(ev) {
     var confirm = $mdDialog.confirm()
           .title('Bulk Update from APM')
-          .textContent('This will overwrite ALL Portal DB categories and Reset Portal DB groups')
-          .ariaLabel('Push Bulk from APM')
+          .textContent('This will overwrite ALL Portal DB categories and ACLs and Reset Portal DB groups')
+          .ariaLabel('Pull Bulk from APM')
           .targetEvent(ev)
           .ok("Let's do it!")
           .cancel('Cancel');
@@ -538,8 +723,6 @@ function($scope,urlcategories,auth, $http,$mdToast,$mdDialog){
     })  ;
   }
 
-
-
   $scope.urlcategories = urlcategories.urlcategories;
 
 
@@ -547,12 +730,12 @@ function($scope,urlcategories,auth, $http,$mdToast,$mdDialog){
 }]);
 
 app.controller('MainCtrl', [
-'$scope','urlcategories','auth',
-function($scope,urlcategories,auth){
+  '$scope','urlcategories','acls','auth',
+  function($scope,urlcategories,acls,auth){
 
   $scope.urlcategories = urlcategories.urlcategories;
-  $scope.menufabisOpen = false;
+  $scope.menufabisOpen = true;
   $scope.isAdmin = auth.isAdmin;
 
-
+  $scope.acls = acls.acls;
 }]);

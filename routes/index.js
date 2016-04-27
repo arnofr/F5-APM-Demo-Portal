@@ -5,10 +5,12 @@ require('../models/Urlcategory');
 require('../models/User');
 require('../models/Groups');
 require('../models/Apm');
+require('../models/Acls');
 var Urlcategory = mongoose.model('Urlcategory');
 var User = mongoose.model('User');
 var Group = mongoose.model('Group');
 var APM = mongoose.model('APM');
+var ACL = mongoose.model('ACL');
 var passport = require('passport');
 var jwt = require('express-jwt');
 var auth = jwt({secret: 'MYDIRTYSECRETSTATICINMYCODE', userProperty: 'payload'});
@@ -23,6 +25,14 @@ router.get('/index.html', function(req, res, next) {
   res.render('index', { title: 'APM Portal' });
 });
 // routing for angular templates
+router.get('/acls.html', function(req, res, next) {
+  res.render('acls', { title: 'APM Portal' });
+});
+
+router.get('/editacl.html', function(req, res, next) {
+  res.render('editacl', { title: 'APM Portal' });
+});
+
 router.get('/categories.html', function(req, res, next) {
   res.render('categories', { title: 'APM Portal' });
 });
@@ -113,6 +123,35 @@ router.param('group', function(req, res, next, id) {
 });
 
 // routing for apm deleg portal
+
+router.get('/acls', auth, function(req, res, next) {
+  //we ask to retrieve user's group
+  User.findOne({ username: req.payload.username },'username group', function (err, user) {
+   if (err) { return next(err) }
+    console.log("Logged user "+user.username + " group is " + user.group);
+    //then we find group definition containing allowed categories for group user
+    Group.findOne({name: user.group}, function (err, group) {
+     if (err) { return (err) }
+      //find acl in db belonging to that group
+      ACL.find({'name': { $in : group.acl }}, function(err, acls){
+        if(err){   return next(err); }
+        //by filtering urlcategories
+
+        res.json(acls);
+      });
+
+      ACL.find( function(err, acls){
+        if(err){   return next(err); }
+        //by filtering urlcategories
+
+        res.json(acls);
+      });
+    });
+  });
+
+
+});
+
 
 router.param('urlcategory', function(req, res, next, id) {
   var query = Urlcategory.findById(id);
@@ -227,7 +266,7 @@ router.get('/getapmcategories', auth, function(req, res, next) {
       strictSSL : false, //no certificate validation
       rejectUnauthorized : false //no certificate validation
     };
-    console.log("sending GET request to APM");
+    console.log("sending GET request to APM for all categories");
     request(options, function (error, response, body) {
         if (!error  && response.statusCode == 200) {
           console.log("apm GET all category done");
@@ -240,7 +279,6 @@ router.get('/getapmcategories', auth, function(req, res, next) {
         //now overwritting mongodb
         //droping the table
         //no error checking here
-
         var urlcategories=[];
         console.log("before :"+urlcategories);
         Urlcategory.collection.drop( function(err) {
@@ -277,7 +315,8 @@ router.get('/getapmcategories', auth, function(req, res, next) {
                     Group.update({"name":{ $ne : "allcategories"}}, {"category": []}, {"multi": 'true'}, function(err) {
                       //need to modify existing other groups
                       if(err){ return next(err); }
-                      res.json("{Portal DB updated}");
+                      //res.json("{Portal DB updated}");
+                      nowupdateacls();
                     });
 
                  }
@@ -285,19 +324,77 @@ router.get('/getapmcategories', auth, function(req, res, next) {
 
           });
 
-          //easiest but this is acessing mongodb directly without going throu mongoose
-          //thus urls in category doesn t have _id which breacks angularapp logic so far
-        /*  Urlcategory.collection.insert( tmp, function(err) {
-            console.log('MongoDB collection Urlcategory updated from APM');
-            return( res.json(tmp));
-            //now need to update categrory groups
-          })*/
+
         });
         } else {
           console.log("error found while retrieving category from APM ...");
           res.json("{KO}");
         }
-    })
+    });
+    nowupdateacls = function () {
+      //doing the same for acls
+      var options2 = {
+        url: "https://"+apm.username+":"+apm.password+"@"+apm.ip+"/mgmt/tm/apm/acl/",
+        method: 'GET',
+        strictSSL : false, //no certificate validation
+        rejectUnauthorized : false //no certificate validation
+      };
+      console.log("sending GET request to APM for all ACLs");
+      request(options2, function (error, response, body) {
+          if (!error  && response.statusCode == 200) {
+          console.log("apm GET all acl done");
+
+
+          //now overwritting mongodb
+          //droping the table
+          //no error checking here
+          var acls=[];
+          console.log("before :"+acls);
+          ACL.collection.drop( function(err) {
+            console.log('MongoDB collection ACL dropped');
+            //now inserting
+            var tmp = JSON.parse(body).items;
+            async.each (tmp, function(tmpacl, next){
+              newacl = new ACL();
+              newacl.name             = tmpacl.name;
+              newacl.aclOrder         = tmpacl.aclOrder;
+              newacl.locationSpecific = tmpacl.locationSpecific;
+              newacl.pathMatchCase    = tmpacl.pathMatchCase;
+              newacl.type             = tmpacl.type;
+              newacl.entries          = tmpacl.entries;
+              newacl.save( function(err,newacl){
+                acls.push(newacl);
+                next();
+              });
+            }, function(){
+              //all done
+              //updating allcategories group with acces to all acls
+              var allaclsgroup =[];
+              for (var i = 0; i < acls.length; i++) {
+                allaclsgroup.push(acls[i].name);
+              }
+              Group.findOneAndUpdate({ 'name': "allcategories"},
+                { $set: {"acl": allaclsgroup }},       //update to be done
+                {  safe: true, upsert: true, new: true }, //options new : true returns modified doc
+                   function(err) {
+                      if(err){ return next(err); }
+                      Group.update({"name":{ $ne : "allcategories"}}, {"acl": []}, {"multi": 'true'}, function(err) {
+                        //need to modify existing other groups
+                        if(err){ return next(err); }
+                        res.json("{Portal DB updated}");
+                      });
+                   }
+                );
+            });
+          });
+          } else {
+            console.log("error found while retrieving acls from APM ...");
+            res.json("{KO}");
+          }
+      })
+    } //end definition nowupdateacls
+
+
   });
 });
 
@@ -324,7 +421,8 @@ router.post('/groups', auth, function(req, res, next) {
 //updating a group
 router.put('/groups/:group', auth, function(req, res, next) {
 
-  req.group.category =req.body.category;
+  if (req.body.category){req.group.category=req.body.category;}
+  if (req.body.acl){req.group.acl=req.body.acl;}
   req.group.save(function(err) {
     if(err){ return next(err); }
     return res.json(req.group);
@@ -342,6 +440,106 @@ router.delete('/urlcategories/:id1/:id2', auth, function(req, res, next) {
           return res.json(urlcategory);
        }
     );
+});
+
+//manage route for acls
+router.param('acl', function(req, res, next, id) {
+  var query = ACL.findById(id);
+
+  query.exec(function (err, acl){
+    if (err) { return next(err); }
+    if (!acl) { return next(new Error('can\'t find acl')); }
+    req.acl = acl;
+    return next();
+  });
+});
+
+//deleting an entry in an acl
+router.delete('/acls/:id1/:id2', auth, function(req, res, next) {
+//id1 is acl id , id2 is entry id
+  ACL.findOneAndUpdate({ '_id': req.params.id1},
+    { $pull: {"entries": {"_id": req.params.id2} }},       //update to be done
+    {  safe: true, upsert: true, new: true }, //options new : true returns modified doc
+       function(err, acl) {
+          if(err){ return next(err); }
+          return res.json(acl);
+       }
+    );
+});
+
+//newaclparamsjson {"dstSubnet" : $scope.newacl.dstSubnet, "dstStartPort" : $scope.newacl.dstStartPort, "dstEndPort": $scope.newacl.dstEndPort }
+//adding entry to a acl
+router.put('/acls/:acl', auth, function(req, res, next) {
+
+  var modification = {"dstSubnet" : req.body.dstSubnet, "dstStartPort" : req.body.dstStartPort,"dstEndPort":   req.body.dstEndPort} ;
+
+  req.acl.entries.push(modification);
+
+  req.acl.save({setDefaultsOnInsert: true},function(err) {
+    if(err){ return next(err); }
+
+    return res.json(req.acl);
+  });
+
+});
+
+//push an acl ocnfiguration to apm
+router.get('/updateapmacl/:acl', auth, function(req, res, next) {
+  //removing mango _id property
+  for (var i = 0; i < req.acl.entries.length; i++) {
+    delete req.acl.entries[i]._id
+  }
+
+  APM.findOne({'name':"myapm"},  function (err, apm) {
+    if (err) { return (JSON.stringify(err)) }
+
+    var options = {
+      url: "https://"+apm.username+":"+apm.password+"@"+apm.ip+"/mgmt/tm/apm/acl/~Common~"+req.acl.name,
+      method: 'PATCH',
+      json : {"entries": req.acl.entries}, //post the urls array in json
+      strictSSL : false, //no certificate validation
+      rejectUnauthorized : false //no certificate validation
+    };
+    console.log("sending patch request to APM for acl update");
+    request(options, function (error, response, body) {
+        if (!error  && response.statusCode == 200) {
+          console.log("apm change done");
+          res.json("{OK}");
+        } else {
+          console.log("error found sending acl to APM ...");
+          res.json(error || response.body );
+        }
+    })
+  });
+
+});
+
+//retrieve an acl configuration from apm
+router.get('/getapmacl/:acl', auth, function(req, res, next) {
+  APM.findOne({'name':"myapm"},  function (err, apm) {
+    if (err) { return (JSON.stringify(err)) }
+
+    var options = {
+      url: "https://"+apm.username+":"+apm.password+"@"+apm.ip+"/mgmt/tm/apm/acl/~Common~"+req.acl.name,
+      method: 'GET',
+      strictSSL : false, //no certificate validation
+      rejectUnauthorized : false //no certificate validation
+    };
+    console.log("sending GET request to APM");
+    request(options, function (error, response, body) {
+        if (!error  && response.statusCode == 200) {
+          console.log("apm GET done on acl");
+          //updating mangodb
+          req.acl.entries=JSON.parse(body).entries;
+          req.acl.save();
+          //sending response
+          res.json(req.acl.entries);
+        } else {
+          console.log("error found while retrieving acl from APM ...");
+          res.json("{KO}");
+        }
+    })
+  });
 });
 
 module.exports = router;

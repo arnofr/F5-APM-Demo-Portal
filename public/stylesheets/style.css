@@ -15,7 +15,7 @@ a:hover {
 a:active {
     text-decoration: none;
 }
-  
+
 md-card {
   min-width:350px;
 }
@@ -31,8 +31,15 @@ md-sidenav.md-closed.md-locked-open-add-active {
     max-width: 200px !important;
 
 }
+/*correcting icon positionning in fab*/
+md-icon.ng-scope.md-font.material-icons {
+  position: absolute;
+    left: 50%;
+    top: 50%;
+    margin-left: -12px;
+    margin-top: -12px;
 
-
+}
 /* from material training demo*/
 html, body {
   font-family: 'Roboto', sans-serif;
