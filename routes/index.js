@@ -139,13 +139,6 @@ router.get('/acls', auth, function(req, res, next) {
 
         res.json(acls);
       });
-
-      ACL.find( function(err, acls){
-        if(err){   return next(err); }
-        //by filtering urlcategories
-
-        res.json(acls);
-      });
     });
   });
 
