@@ -1,0 +1,83 @@
+<div layout="row" flex layout-sm="column">
+  <div flex="nogrow">
+    <md-card >
+      <md-toolbar class="md-table-toolbar md-default" >
+        <div class="md-toolbar-tools">
+          <span>Network Locations</span>
+        </div>
+      </md-toolbar>
+      <md-table-container >
+        <table md-table   md-progress="promise">
+          <thead md-head md-order="query.order" md-on-reorder="">
+            <tr md-row>
+              <th md-column md-numeric>#</th>
+              <th md-column md-order-by="nameToLower">Network Locations</th>
+              <th md-column >Type</th>
+              <th md-column>
+                <md-button class="md-icon-button" aria-label="Push to APM" ng-click="showConfirmpush($event)">
+                  <md-tooltip>Push to APM</md-tooltip>
+                  <md-icon style="color:rgb(63,81,181);font:bold;" >&#xE2C6;</md-icon>
+                </md-button>
+                <md-button class="md-icon-button" aria-label="Pull from APM" ng-click="showConfirmpull($event)">
+                  <md-tooltip>Pull from APM</md-tooltip>
+                  <md-icon style="color:rgb(63,81,181);font:bold;">&#xE2C4;</md-icon>
+                </md-button>
+              </th>
+            </tr>
+          </thead>
+          <tbody md-body>
+            <tr md-row  ng-repeat="networklocation in networklocations">
+               <td md-cell>{{$index+1}}</td>
+               <td md-cell>{{networklocation.name}}</td>
+               <td md-cell>{{networklocation.data}}</td>
+               <td md-cell ng-click="removeLocation(networklocation._id)" flex><md-icon md-font-icon="material-icons" style="display: inline-block;text-align:center; width: 100%;">delete</md-icon></td>
+             </tr>
+           </tbody>
+        </table>
+      </md-table-container>
+      <md-content layout-padding>
+        <div >
+          <form name="newLocationform">
+            <div layout="row" layout-align="center center" flex="nogrow" >
+              <md-input-container >
+                <label>Add a Network:</label>
+                <md-icon md-font-icon="material-icons" style="color:rgb(63,81,181);">&#xE150;</md-icon>
+                <input name="newlocation.name" ng-model="newlocation.name" required>
+              </md-input-container>
+              <md-input-container >
+                <label>Add Network type:</label>
+                <input name="newlocation.data" ng-model="newlocation.data" required>
+              </md-input-container>
+              <div flex="nogrow" layout-align="center center">
+                <md-button type="submit" class="md-primary"
+                  ng-class="{'md-raised md-hue-1': (newLocationform.$dirty && newLocationform.$valid) }"
+                  ng-click="newLocationform.$valid && addNetworkLocation(newLocationform)">Add Location</md-button>
+                </div>
+            </div>
+        </form>
+      </div>
+      </md-content>
+    </md-card>
+  </div>
+  <div>
+    <md-button class="md-primary" ng-click="showhint=true" ng-hide="showhint">
+      <i class="material-icons">&#xE8FD;</i>
+    </md-button>
+    <md-card  style="min-width:0px;max-width:200px;" ng-show="showhint">
+      <md-toolbar   class="md-table-toolbar md-default" >
+        <div class="md-toolbar-tools" >
+            <span>Hints</span>
+            <md-button class="md-primary" ng-click="showhint=false" >
+              <i class="material-icons" style="color:rgb(63,81,181);">&#xE8FD;</i>
+            </md-button>
+        </div>
+      </md-toolbar>
+      <md-content  flex="auto" layout-padding>
+        <p class="md-body-1">Enter IP/subnet</p>
+        <p class="md-body-1">type is internal or wifi</p>
+        <p class="md-body-1">If you want to retrieve APM Network Location configuration, use arrow down icon to pull from APM</p>
+        <p class="md-body-1">If you want to replace APM Network Location configuration, use arrow ip icon to push to APM</p>
+      </md-content>
+    </md-card>
+  </div>
+<div>

@@ -1,6 +1,5 @@
 var app = angular.module('ApmPortal', ['ui.router','ngMaterial','md.data.table','ngMessages']);
 
-
 app.config([
 '$stateProvider',
 '$urlRouterProvider',
@@ -30,6 +29,22 @@ function($stateProvider, $urlRouterProvider) {
         $state.go('login');
       }
     }]
+  })
+  .state('networklocation', {
+    url: '/networklocation',
+    templateUrl: 'networklocation.html',
+    controller: 'networklocationCtrl',
+    resolve: {
+      categoriesPromise: ['networklocations', function(networklocations){
+        return networklocations.getAll();
+      }]
+    },
+    onEnter: ['$state', 'auth', function($state, auth){
+      if(!auth.isLoggedIn()){
+        $state.go('login');
+      }
+    }]
+
   })
   .state('acls', {
     url: '/acls',
@@ -147,7 +162,6 @@ function($stateProvider, $urlRouterProvider) {
       }
     });
 
-    //$urlRouterProvider.otherwise('home');
     $urlRouterProvider.otherwise('index');
   }]);
 
@@ -659,15 +673,28 @@ app.controller('GroupsCtrl',[
       });
     };
 }]);
-
+//hastily coded
 app.controller('APMmgtCtrl', [
   '$scope','urlcategories','auth','$http','$mdToast','$mdDialog',
   function($scope,urlcategories,auth, $http,$mdToast,$mdDialog){
     $scope.apm={};
-    $scope.apm.name ="myapm";
-    $scope.apm.ip="192.168.142.15";
-    $scope.apm.username="admin";
-    $scope.apm.password="admin";
+
+
+    return $http.get('/apmconfig', {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
+      console.log(data.data);
+      $scope.apm.name =data.data.name;
+      $scope.apm.ip=data.data.ip;
+      $scope.apm.username=data.data.username;
+      $scope.apm.password=data.data.password;
+    }, function(response) {
+      showSimpleToast("top right","Error Connecting to Portal DB setting APM default config")
+      $scope.apm.name ="myapm";
+      $scope.apm.ip="192.168.142.15";
+      $scope.apm.username="admin";
+      $scope.apm.password="admin";
+    })  ;
+
+
     $scope.showhint=false;
 
     //md-toast function
@@ -699,9 +726,6 @@ app.controller('APMmgtCtrl', [
           }, function(response) {
             showSimpleToast("top right","Error making change to Portal DB")
           })  ;
-
-
-
       }, function() {
           //do nothing on cancel
           //$scope.status = 'You decided to keep your debt.';
@@ -724,8 +748,143 @@ app.controller('APMmgtCtrl', [
   }
 
   $scope.urlcategories = urlcategories.urlcategories;
+}]);
+
+app.factory('networklocations', ['$http', 'auth','$mdToast', function($http, auth, $mdToast){
+  var nl = {
+    networklocations :[]
+  };
+
+  //md-toast function
+  showSimpleToast = function(position,message) {
+    $mdToast.show(
+      $mdToast.simple()
+        .textContent(message)
+        .position(position )
+        .hideDelay(3000)
+    );
+  };
+
+  //remove a newtork location
+  nl.removeLocation = function(locationid) {
+    return $http.delete('/networklocations/'+locationid, {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
+      angular.copy(data.data.records,nl.networklocations);
+    });
+  };
+  //get all network location
+  nl.getAll = function() {
+    $http.get('/networklocations', {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
+      angular.copy(data.data.records,nl.networklocations);
+    });
+  };
+  nl.pullnetworkfromapm = function() {
+    $http.get('/apmnetworklocations', {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
+      if (data.data != "{KO}") {
+        angular.copy(data.data.records,nl.networklocations);
+
+          showSimpleToast('top right',"Network locations Retrieval successfull from APM");
+      } else {
+        //something bad happened
+        //get working but error code back KO
+          showSimpleToast('top right',"Cannot retrieve Network locations from APM");
+      }
+    }, function(data){
+        // get no working ?
+        showSimpleToast('top right',"Cannot retrieve Network locations from APM");
+    }
+  )};//end pull
+
+    nl.pushnetworktoapm = function() {
+      $http.put('/apmnetworklocations', {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
+        if (data.data != "{KO}") {
+          /*angular.copy(data.data.records,nl.networklocations);*/
+
+            showSimpleToast('top right',"Network Locations successfull pushed to APM");
+        } else {
+          //something bad happened
+          //get working but error code back KO
+            showSimpleToast('top right',"Cannot push Network Locations to APM");
+        }
+      }, function(data){
+          // get no working ?
+          showSimpleToast('top right',"Cannot push Network Locations to APM");
+      });
+  };//endput
 
 
+  nl.addnetworklocation = function(newnetworklocation) {
+    //{name : $scope.newlocation.name, type : $scope.newlocation.data }
+    return $http.post('/apmnetworklocations/',newnetworklocation, {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
+      angular.copy(data.data.records,nl.networklocations);
+    });
+  }
+
+  return nl;
+}]);
+
+app.controller('networklocationCtrl', [
+  '$mdDialog','$scope','networklocations','auth', function($mdDialog,$scope,networklocations,auth){
+    //$scope.networklocations=[];
+    $scope.newlocation={};
+    $scope.newlocation.name="";
+    $scope.newlocation.data="";
+    $scope.showhint=false;
+    $scope.networklocations=networklocations.networklocations;
+
+    $scope.removeLocation = function(locationid){
+      console.log(locationid);
+      networklocations.removeLocation(locationid);
+      $scope.newlocation.name="";
+      $scope.newlocation.data="";
+    };
+    $scope.addNetworkLocation = function(form) {
+      networklocations.addnetworklocation({name : $scope.newlocation.name, data : $scope.newlocation.data });
+      $scope.newlocation.name="";
+      $scope.newlocation.data="";
+    };//end add NetworkLocation
+
+    //md-dialog to push to apm
+    $scope.showConfirmpush = function(ev) {
+
+      var confirm = $mdDialog.confirm()
+            .title('Update APM Network Locations')
+            .textContent('This will overwrite  APM Network Locations configuration')
+            .ariaLabel('Push to APM')
+            .targetEvent(ev)
+            .ok("Let's do it!")
+            .cancel('Cancel');
+        $mdDialog.show(confirm).then(function() {
+            //if confirm
+            networklocations.pushnetworktoapm();
+
+        }, function() {
+            //do nothing on cancel
+
+          });
+
+    }; //end confirm push
+    //end md-dialog
+
+    //md-dialog to pull from apm
+    $scope.showConfirmpull = function(ev) {
+
+      var confirm = $mdDialog.confirm()
+            .title('Update Network Locations from APM')
+            .textContent('This will overwrite Network Location configuration')
+            .ariaLabel('Pull from APM')
+            .targetEvent(ev)
+            .ok("Let's do it!")
+            .cancel('Cancel');
+        $mdDialog.show(confirm).then(function() {
+            //if confirm
+            networklocations.pullnetworkfromapm();
+
+        }, function() {
+          //do nothing on cancel
+
+        });
+    };
+    //end md-dialog
 
 }]);
 

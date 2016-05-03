@@ -6,11 +6,14 @@ require('../models/User');
 require('../models/Groups');
 require('../models/Apm');
 require('../models/Acls');
+require('../models/networklocation');
 var Urlcategory = mongoose.model('Urlcategory');
 var User = mongoose.model('User');
 var Group = mongoose.model('Group');
 var APM = mongoose.model('APM');
 var ACL = mongoose.model('ACL');
+var NetworkLocation = mongoose.model('NetworkLocation');
+
 var passport = require('passport');
 var jwt = require('express-jwt');
 var auth = jwt({secret: 'MYDIRTYSECRETSTATICINMYCODE', userProperty: 'payload'});
@@ -55,6 +58,110 @@ router.get('/groupcategory.html', function(req, res, next) {
 });
 router.get('/apmmgt.html', function(req, res, next) {
   res.render('apmmgt', { title: 'APM Portal' });
+});
+router.get('/networklocation.html', function(req, res, next) {
+  res.render('networklocation', { title: 'APM Portal' });
+});
+
+router.get("/networklocations", function(req, res, next){
+  //looking for network locations, name coded in the call ...
+  NetworkLocation.findOne({ 'name':"networklocation" }, function(err, networklocation) {
+        if(err){ return next(err); }
+          res.json(networklocation);
+      }
+  );
+});
+router.get("/apmnetworklocations", function(req, res, next){
+  //looking for network locations, name coded in the call ...
+    APM.findOne({'name':"myapm"},  function (err, apm) {
+      if (err) { return (JSON.stringify(err)) }
+      var options = {
+        url: "https://"+apm.username+":"+apm.password+"@"+apm.ip+"/mgmt/tm/ltm/data-group/internal/networklocation",
+        method: 'GET',
+        strictSSL : false, //no certificate validation
+        rejectUnauthorized : false //no certificate validation
+      };
+      console.log("sending GET request to APM for network location");
+      request(options, function (error, response, body) {
+        if (!error  && response.statusCode == 200) {
+          console.log("apm GET all nework location done");
+          NetworkLocation.findOneAndUpdate({ 'name': "networklocation"},
+            { $set: {"records": JSON.parse(body).records }},       //update to be done
+            {  safe: true, upsert: true, new: true }, //options new : true returns modified doc
+               function(err, networklocation) {
+                console.log("inserting new networklocation records");
+                res.json(networklocation);
+               });
+        } else {
+          console.log("error found while retrieving category from APM ...");
+          res.json("{KO}");
+        } //end if error
+      }); //end request
+
+    });//end APM findone
+});//end router get
+
+//adding a network location to db
+router.post("/apmnetworklocations", function(req, res, next){
+  NetworkLocation.findOneAndUpdate({ 'name':"networklocation" },
+            { $push: {"records": req.body }},
+            {  safe: true, upsert: true, new: true },function(err, networklocation) {
+        if(err){ return next(err); }
+        res.json(networklocation);
+      }
+  );
+
+});//end post network location
+
+//put all network locations to APM
+router.put("/apmnetworklocations", function(req, res, next){
+  //looking for network locations, name coded in the call ...
+    APM.findOne({'name':"myapm"},  function (err, apm) {
+      if (err) { return (JSON.stringify(err)) }
+      var options = {
+        url: "https://"+apm.username+":"+apm.password+"@"+apm.ip+"/mgmt/tm/ltm/data-group/internal/networklocation",
+        method: 'PUT',
+        json : {"records": ""},
+        strictSSL : false, //no certificate validation
+        rejectUnauthorized : false //no certificate validation
+      };
+      console.log("sending put request to APM  network location");
+      NetworkLocation.findOne({ 'name':"networklocation" } ,function(err, networklocation) {
+            if(err){ return next(err); }
+
+            options.json = {"records" : networklocation.records}; //setting request payload
+            request(options, function (error, response, body) {
+              if (!error  && response.statusCode == 200) {
+                console.log("apm put Nework locations done");
+                res.json(response.body);
+
+              } else {
+                console.log("error found while  pushing Network Locations to APM ...");
+                res.json("{KO}");
+              } //end if error
+            }); //end request
+          }
+      );// end findone
+    });//end APM findone
+});//end router put
+
+router.delete('/networklocations/:id1', auth, function(req, res, next) {
+  NetworkLocation.findOneAndUpdate({ 'name':"networklocation" },
+            { $pull: {"records": {"_id": req.params.id1} }},
+            {  safe: true, upsert: true, new: true },function(err, networklocation) {
+        if(err){ return next(err); }
+        res.json(networklocation);
+      }
+  );
+});
+
+router.get("/apmconfig", function(req, res, next){
+  //looking for entry for APM config, name coded in the call ...
+  APM.findOne({ 'name':"myapm" }, function(err, apmconfig) {
+        if(err){ return next(err); }
+          res.json(apmconfig);
+      }
+  );
 });
 
 router.post('/apmconfig', function(req, res, next){
@@ -136,7 +243,6 @@ router.get('/acls', auth, function(req, res, next) {
       ACL.find({'name': { $in : group.acl }}, function(err, acls){
         if(err){   return next(err); }
         //by filtering urlcategories
-
         res.json(acls);
       });
     });
@@ -324,6 +430,7 @@ router.get('/getapmcategories', auth, function(req, res, next) {
           res.json("{KO}");
         }
     });
+
     nowupdateacls = function () {
       //doing the same for acls
       var options2 = {
