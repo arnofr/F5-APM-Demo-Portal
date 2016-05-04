@@ -354,7 +354,7 @@ router.get('/getapmcategory/:urlcategory', auth, function(req, res, next) {
   });
 });
 
-//bulk operation retrieve all APM categories and overwrite
+//bulk operation retrieve all APM categories, ACLS and overwrite
 router.get('/getapmcategories', auth, function(req, res, next) {
   APM.findOne({'name':"myapm"},  function (err, apm) {
     if (err) { return (JSON.stringify(err)) }
@@ -411,7 +411,7 @@ router.get('/getapmcategories', auth, function(req, res, next) {
               {  safe: true, upsert: true, new: true }, //options new : true returns modified doc
                  function(err) {
                     if(err){ return next(err); }
-                    Group.update({"name":{ $ne : "allcategories"}}, {"category": []}, {"multi": 'true'}, function(err) {
+                    Group.update({"name":{ $ne : "allcategories"}},  {"category": []}, {multi: true}, function(err) {
                       //need to modify existing other groups
                       if(err){ return next(err); }
                       //res.json("{Portal DB updated}");
@@ -478,7 +478,7 @@ router.get('/getapmcategories', auth, function(req, res, next) {
                 {  safe: true, upsert: true, new: true }, //options new : true returns modified doc
                    function(err) {
                       if(err){ return next(err); }
-                      Group.update({"name":{ $ne : "allcategories"}}, {"acl": []}, {"multi": 'true'}, function(err) {
+                      Group.update({"name" :{ $ne : "allcategories"}}, {"acl": []}, {multi: true}, function(err) {
                         //need to modify existing other groups
                         if(err){ return next(err); }
                         res.json("{Portal DB updated}");

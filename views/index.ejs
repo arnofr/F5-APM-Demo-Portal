@@ -36,11 +36,11 @@
         <span flex></span>
           <span  ng-show="isLoggedIn()" >{{currentUser()}}</span>
           <md-button class="md-icon-button" ng-show="isLoggedIn()" ui-sref="logout">
-              <md-icon>&#xE879;</md-icon>
+              <i class="material-icons" style="color:rgba(255,255,255,0.87);">&#xE879;</i>
                 <md-tooltip md-direction="dow">Logout</md-tooltip>
           </md-button>
           <md-button class="md-icon-button" ng-hide="isLoggedIn()" ui-sref="login">
-            <md-icon>&#xE879;</md-icon>
+            <i class="material-icons" style="color:rgba(255,255,255,0.87);" >&#xE879;</i>
             <md-tooltip md-direction="dow">Login</md-tooltip>
           </md-button>
       </div>
@@ -56,33 +56,33 @@
           <md-fab-trigger>
             <md-button aria-label="Menu" class="md-fab md-warn">
               <md-tooltip md-direction="right">Menu</md-tooltip>
-                <md-icon >&#xE5D2;</md-icon>
+                <i class="material-icons" >&#xE5D2;</i>
             </md-button>
           </md-fab-trigger>
           <md-fab-actions>
               <md-button aria-label="Edit Categories" class="md-fab md-raised md-mini" hui-sref="category" href="/#/category">
                 <md-tooltip md-direction="right">Edit Categories</md-tooltip>
-                <md-icon   md-font-icon="material-icons" >&#xE051;</md-icon>
+                <i class="material-icons myfab" >&#xE051;</i>
               </md-button>
               <md-button aria-label="Edit ACLs" class="md-fab md-raised md-mini" hui-sref="acl" href="/#/acls">
                 <md-tooltip md-direction="right">Edit ACLs</md-tooltip>
-                <md-icon md-font-icon="material-icons">&#xE051;</md-icon>
+                <i class="material-icons myfab" >&#xE051;</i>
               </md-button>
               <md-button aria-label="Edit Network Locations" class="md-fab md-raised md-mini" hui-sref="networklocation" href="/#/networklocation">
                 <md-tooltip md-direction="right">Edit Network Location</md-tooltip>
-                <md-icon md-font-icon="material-icons">&#xE051;</md-icon>
+                <i class="material-icons myfab" >&#xE051;</i>
               </md-button>
               <md-button aria-label="Add user" class="md-fab md-raised md-mini" href="/#/register" ng-if="isAdmin()" >
                 <md-tooltip md-direction="right">Add user</md-tooltip>
-                <md-icon md-font-icon="material-icons">&#xE869;</md-icon>
+                <i class="material-icons myfab" >&#xE869;</i>
               </md-button>
               <md-button aria-label="Edit Groups" class="md-fab md-raised md-mini" href="/#/editgroups" ng-if="isAdmin()">
                 <md-tooltip md-direction="right">Edit Groups</md-tooltip>
-                <md-icon md-font-icon="material-icons">&#xE869;</md-icon>
+                <i class="material-icons myfab" >&#xE869;</i>
               </md-button>
               <md-button aria-label="APM Management" class="md-fab md-raised md-mini" href="/#/apmmgt" ng-if="isAdmin()">
                 <md-tooltip md-direction="right">APM Management</md-tooltip>
-                <md-icon md-font-icon="material-icons">&#xE869;</md-icon>
+                <i class="material-icons myfab" >&#xE869;</i>
               </md-button>
           </md-fab-actions>
         </md-fab-speed-dial>

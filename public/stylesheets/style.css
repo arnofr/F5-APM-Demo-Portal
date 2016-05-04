@@ -32,7 +32,8 @@ md-sidenav.md-closed.md-locked-open-add-active {
 
 }
 /*correcting icon positionning in fab*/
-md-icon.ng-scope.md-font.material-icons {
+
+i.myfab {
   position: absolute;
     left: 50%;
     top: 50%;
@@ -40,6 +41,7 @@ md-icon.ng-scope.md-font.material-icons {
     margin-top: -12px;
 
 }
+
 /* from material training demo*/
 html, body {
   font-family: 'Roboto', sans-serif;

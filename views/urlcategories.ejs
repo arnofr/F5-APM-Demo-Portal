@@ -11,24 +11,23 @@
             <tr md-row>
               <th md-column md-numeric>#</th>
               <th md-column >Urls</th>
-              <th md-column>
+              <th md-column style="text-align:center;">
                 <md-button class="md-icon-button" aria-label="Push to APM" ng-click="showConfirmpush($event)">
                   <md-tooltip>Push to APM</md-tooltip>
-                  <md-icon style="color:rgb(63,81,181);font:bold;" >&#xE2C6;</md-icon>
+                  <i class="material-icons" style="color:rgb(63,81,181);font:bold;" >&#xE2C6;</i>
                 </md-button>
                 <md-button class="md-icon-button" aria-label="Pull from APM" ng-click="showConfirmpull($event)">
                   <md-tooltip>Pull from APM</md-tooltip>
-                  <md-icon style="color:rgb(63,81,181);font:bold;">&#xE2C4;</md-icon>
+                  <i class="material-icons" style="color:rgb(63,81,181);font:bold;">&#xE2C4;</i>
                 </md-button>
               </th>
             </tr>
           </thead>
           <tbody md-body>
-            <tr md-row  ng-repeat="url in urlcategory.urls">
+            <tr md-row  ng-repeat="url in urlcategory.urls" align=center>
                <td md-cell>{{$index+1}}</td>
                <td md-cell><p  class="md-body-2" >{{url.name}}</p></td>
-               <!--<td md-cell ng-click="removeUrl(url._id)"><i class="material-icons">&#xE872;</i></td>-->
-               <td md-cell ng-click="removeUrl(url._id)" flex><md-icon md-font-icon="material-icons" style="display: inline-block;text-align:center; width: 100%;">delete</md-icon></td>
+               <td md-cell ng-click="removeUrl(url._id)" flex style="text-align:center;"><i class="material-icons" >&#xE872;</i></td>
              </tr>
            </tbody>
         </table>
@@ -39,7 +38,7 @@
             <div layout="row" layout-align="center center" flex="nogrow" >
               <md-input-container >
                 <label>Add an Url:</label>
-                <md-icon md-font-icon="material-icons" style="color:rgb(63,81,181);">&#xE150;</md-icon>
+                <md-icon md-font-icon="material-icons">&#xE150;</md-icon>
                 <input name="newurl" ng-model="newurl.urlname" required>
               </md-input-container>
               <div flex="nogrow" layout-align="center center">

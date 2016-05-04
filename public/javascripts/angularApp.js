@@ -679,9 +679,7 @@ app.controller('APMmgtCtrl', [
   function($scope,urlcategories,auth, $http,$mdToast,$mdDialog){
     $scope.apm={};
 
-
-    return $http.get('/apmconfig', {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
-      console.log(data.data);
+     $http.get('/apmconfig', {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
       $scope.apm.name =data.data.name;
       $scope.apm.ip=data.data.ip;
       $scope.apm.username=data.data.username;
@@ -693,7 +691,6 @@ app.controller('APMmgtCtrl', [
       $scope.apm.username="admin";
       $scope.apm.password="admin";
     })  ;
-
 
     $scope.showhint=false;
 
@@ -709,6 +706,7 @@ app.controller('APMmgtCtrl', [
 
   //md-dialog to pull all category/acl from apm
   $scope.showConfirmbulkapmpull = function(ev) {
+
     var confirm = $mdDialog.confirm()
           .title('Bulk Update from APM')
           .textContent('This will overwrite ALL Portal DB categories and ACLs and Reset Portal DB groups')
@@ -832,12 +830,13 @@ app.controller('networklocationCtrl', [
     $scope.networklocations=networklocations.networklocations;
 
     $scope.removeLocation = function(locationid){
-      console.log(locationid);
       networklocations.removeLocation(locationid);
       $scope.newlocation.name="";
       $scope.newlocation.data="";
     };
     $scope.addNetworkLocation = function(form) {
+      console.log($scope.newlocation.name);
+      console.log($scope.newlocation.data);
       networklocations.addnetworklocation({name : $scope.newlocation.name, data : $scope.newlocation.data });
       $scope.newlocation.name="";
       $scope.newlocation.data="";

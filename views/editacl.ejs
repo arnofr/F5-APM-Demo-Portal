@@ -11,14 +11,14 @@
           <tr md-row>
             <th md-column md-numeric>#</th>
             <th md-column >ACLs</th>
-            <th md-column>
+            <th md-column style="text-align:center;">
               <md-button class="md-icon-button" aria-label="Push to APM" ng-click="showConfirmpush($event)">
                 <md-tooltip>Push to APM</md-tooltip>
-                <md-icon style="color:rgb(63,81,181);font:bold;" >&#xE2C6;</md-icon>
+                <i class="material-icons"  style="color:rgb(63,81,181);font:bold;" >&#xE2C6;</i>
               </md-button>
               <md-button class="md-icon-button" aria-label="Pull from APM" ng-click="showConfirmpull($event)">
                 <md-tooltip>Pull from APM</md-tooltip>
-                <md-icon style="color:rgb(63,81,181);font:bold;">&#xE2C4;</md-icon>
+                <i class="material-icons"  style="color:rgb(63,81,181);font:bold;">&#xE2C4;</i>
               </md-button>
             </th>
           </tr>
@@ -27,8 +27,7 @@
           <tr md-row  ng-repeat="entry in acl.entries">
              <td md-cell>{{$index+1}}</td>
              <td md-cell><p  class="md-body-2" >{{entry.dstSubnet}}  {{"port " + entry.dstStartPort}} {{entry.dstEndPort === entry.dstStartPort ? "" : "to " + entry.dstEndPort}}</p></td>
-             <!--<td md-cell ng-click="removeUrl(url._id)"><i class="material-icons">&#xE872;</i></td>-->
-             <td md-cell ng-click="removeAclentry(entry._id)" flex><md-icon md-font-icon="material-icons" style="display: inline-block;text-align:center; width: 100%;">delete</md-icon></td>
+             <td md-cell ng-click="removeAclentry(entry._id)" flex><i class="material-icons"  style="display: inline-block;text-align:center; width: 100%;">delete</i></td>
            </tr>
          </tbody>
       </table>
@@ -40,6 +39,7 @@
             <div layout="row" layout-align="center center" >
               <md-input-container >
                 <label>ACL Destination:</label>
+                <md-icon md-font-icon="material-icons">&#xE150;</md-icon>
                 <input name="newacl.dstSubnet" ng-model="newacl.dstSubnet" required>
               </md-input-container>
               <md-input-container flex="20">
