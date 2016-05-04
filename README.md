@@ -9,7 +9,7 @@ optional : install mongo-express
 
 4) start mongodb
 
-5) create database apmportal :
+5) populate database apmportal :
 
 in mongo deb repository
 
@@ -19,9 +19,13 @@ mongoimport --db apmportal --collection groups  --drop --file "c:\F5-APM-Demo-Po
 
 mongoimport --db apmportal --collection apmconfig  --drop --file "c:\F5-APM-Demo-Portal\default mongodb setup\apmconfig.json"
 
-6) npm start in F5-APM-Demo-Portal folder
+mongoimport --db apmportal --collection networklocation  --drop --file "c:\F5-APM-Demo-Portal\default mongodb setup\networklocation.json"
 
-7) connect to portal 127.0.0.1:3000
+6) npm install
+
+7) npm start in F5-APM-Demo-Portal folder
+
+8) connect to portal 127.0.0.1:3000
 
 log with admin/admin
 
