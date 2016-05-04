@@ -38,7 +38,7 @@
       <md-content layout-padding>
         <div >
           <form name="newLocationform">
-            <div layout="row" layout-align="center bottom" flex="nogrow" >
+            <div layout="row" flex="nogrow" layout-align="center bottom">
               <md-input-container >
                 <label>Add a Network:</label>
                 <md-icon md-font-icon="material-icons">&#xE150;</md-icon>
@@ -51,11 +51,10 @@
                   <md-option value="wifi" >wifi</md-option>
                 </md-select>
               </md-input-container>
-              <div flex="nogrow" layout-align="center bottom">
-                <md-button type="submit" class="md-primary"
-                  ng-class="{'md-raised md-hue-1': (newLocationform.$dirty && newLocationform.$valid) }"
-                  ng-click="newLocationform.$valid && addNetworkLocation(newLocationform)">Add Location</md-button>
-                </div>
+              <md-button type="submit" class="md-primary"
+                ng-class="{'md-raised md-hue-1': (newLocationform.$dirty && newLocationform.$valid) }"
+                ng-click="newLocationform.$valid && addNetworkLocation(newLocationform)">Add Location
+              </md-button>
             </div>
         </form>
       </div>
