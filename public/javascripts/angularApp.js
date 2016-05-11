@@ -256,10 +256,7 @@ app.controller('AuthCtrl', ['$scope','$state','auth', 'groups','$mdToast', funct
         showSimpleToast("top right","New User added to Portal DB")
         $state.go('register');
       } , function(error){
-
         showSimpleToast("top right",error.data.message)
-
-
       });
 
     };
@@ -273,14 +270,28 @@ app.controller('AuthCtrl', ['$scope','$state','auth', 'groups','$mdToast', funct
       });
     };
 
-  }])
-
-app.controller('NavCtrl', ['$scope','auth',function($scope, auth){
-    $scope.isLoggedIn = auth.isLoggedIn;
-
-    $scope.currentUser = auth.currentUser;
-    //$scope.logOut = auth.logOut;
   }]);
+
+app.controller('NavCtrl', ['$scope','auth','$http','$interval', function($scope, auth, $http,$interval){
+    $scope.isLoggedIn = auth.isLoggedIn;
+    $scope.currentUser = auth.currentUser;
+    $scope.isapmavailable = true;
+
+    $scope.apmavailable =  function(){
+      $http.get('/ping').then(function(data){
+        if (data.data == "{OK}") {
+          console.log("apm available");
+          $scope.isapmavailable = true;
+        } else {
+          console.log("apm not available");
+          $scope.isapmavailable = false;
+        }
+      });
+    }//apm available
+    $scope.apmavailable();
+    $scope.mycall = $interval($scope.apmavailable,30000);
+    //$scope.logOut = auth.logOut;
+}]);
 
 app.factory('urlcategories', ['$http', 'auth', function($http, auth){
   var o = {
@@ -698,6 +709,7 @@ app.controller('APMmgtCtrl', [
       $scope.apm.ip=data.data.ip;
       $scope.apm.username=data.data.username;
       $scope.apm.password=data.data.password;
+
     }, function(response) {
       showSimpleToast("top right","Error Connecting to Portal DB setting APM default config")
       $scope.apm.name ="myapm";
@@ -757,7 +769,7 @@ app.controller('APMmgtCtrl', [
     apmconfig.username=$scope.apm.username;
     apmconfig.password=$scope.apm.password;
     return $http.post('/apmconfig', apmconfig, {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
-      showSimpleToast("top right","Change done to Portal DB")
+      showSimpleToast("top right","Change done to Portal DB");
     }, function(response) {
       showSimpleToast("top right","Error making change to Portal DB")
     })  ;

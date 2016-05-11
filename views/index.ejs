@@ -34,6 +34,8 @@
         <img src="/images/logo.svg">
         <h2>APM Delegation Demo Portal</h2>
         <span flex></span>
+        <span ng-hide="isapmavailable" style="color:red" class="md-subhead">Warning APM not reachable, please verify APM configuration in APM Management menu</span>
+        <span flex></span>
           <span  ng-show="isLoggedIn()" >{{currentUser()}}</span>
           <md-button class="md-icon-button" ng-show="isLoggedIn()" ui-sref="logout">
               <i class="material-icons" style="color:rgba(255,255,255,0.87);">&#xE879;</i>

@@ -62,7 +62,23 @@ router.get('/apmmgt.html', function(req, res, next) {
 router.get('/networklocation.html', function(req, res, next) {
   res.render('networklocation', { title: 'APM Portal' });
 });
-
+router.get("/ping", function(req, res, next){
+  APM.findOne({'name':"myapm"},  function (err, apm) {
+    if (err) { return (JSON.stringify(err)) }
+    var options = {
+      url: "https://"+apm.username+":"+apm.password+"@"+apm.ip+"/mgmt/tm/apm",
+      method: 'GET',
+      strictSSL : false, //no certificate validation
+      rejectUnauthorized : false //no certificate validation
+    };
+    request(options, function (error, response, body) {
+      if (!error  && response.statusCode == 200) {
+        return res.json("{OK}");
+      } else { return res.json("{KO}");
+      }
+    });
+  })//apm findone
+});
 router.get("/networklocations", function(req, res, next){
   //looking for network locations, name coded in the call ...
   NetworkLocation.findOne({ 'name':"networklocation" }, function(err, networklocation) {
