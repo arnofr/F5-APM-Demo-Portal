@@ -413,6 +413,7 @@ app.controller('ACLCtrl', [
     $scope.newacl.dstStartPort="";
     $scope.aclalert="";
     $scope.showhint=false;
+    $scope.progressbar=true;
     //md-toast function
     showSimpleToast = function(position,message) {
       $mdToast.show(
@@ -433,8 +434,10 @@ app.controller('ACLCtrl', [
             .cancel('Cancel');
         $mdDialog.show(confirm).then(function() {
             //if confirm
-            acls.pushacltoapm($scope.acl._id);
-
+          $scope.progressbar=false;
+          acls.pushacltoapm($scope.acl._id).then(function(){
+            $scope.progressbar=true;
+          }) ;
         }, function() {
             //do nothing on cancel
             //$scope.status = 'You decided to keep your debt.';
@@ -453,8 +456,10 @@ app.controller('ACLCtrl', [
             .cancel('Cancel');
         $mdDialog.show(confirm).then(function() {
             //if confirm
-            acls.pullaclfromapm($scope.acl._id,$stateParams.id);
-
+            $scope.progressbar=false;
+            acls.pullaclfromapm($scope.acl._id,$stateParams.id).then(function(){
+              $scope.progressbar=true;
+            }) ;
         }, function() {
           //do nothing on cancel
           //$scope.status = 'You decided to keep your debt.';
@@ -491,6 +496,8 @@ app.controller('UrlcategoriesCtrl', [
     $scope.newurl.urlname="";
     $scope.urlalert="";
     $scope.showhint=false;
+    $scope.progressbar=true//hide progressbar
+
     //md-toast function
     showSimpleToast = function(position,message) {
       $mdToast.show(
@@ -511,7 +518,10 @@ app.controller('UrlcategoriesCtrl', [
             .cancel('Cancel');
         $mdDialog.show(confirm).then(function() {
             //if confirm
-            urlcategories.pushcategorytoapm($scope.urlcategory._id);
+            $scope.progressbar=false;
+              urlcategories.pushcategorytoapm($scope.urlcategory._id).then(function(){
+              $scope.progressbar=true;
+            }) ;
 
         }, function() {
             //do nothing on cancel
@@ -531,7 +541,10 @@ app.controller('UrlcategoriesCtrl', [
             .cancel('Cancel');
         $mdDialog.show(confirm).then(function() {
             //if confirm
-            urlcategories.pullcategoryfromapm($scope.urlcategory._id,$stateParams.id);
+          $scope.progressbar=false;
+          urlcategories.pullcategoryfromapm($scope.urlcategory._id,$stateParams.id).then(function(){
+            $scope.progressbar=true;
+          }) ;
 
         }, function() {
           //do nothing on cancel
@@ -678,8 +691,9 @@ app.controller('APMmgtCtrl', [
   '$scope','urlcategories','auth','$http','$mdToast','$mdDialog',
   function($scope,urlcategories,auth, $http,$mdToast,$mdDialog){
     $scope.apm={};
+    $scope.progressbar=true;
 
-     $http.get('/apmconfig', {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
+    $http.get('/apmconfig', {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
       $scope.apm.name =data.data.name;
       $scope.apm.ip=data.data.ip;
       $scope.apm.username=data.data.username;
@@ -709,19 +723,23 @@ app.controller('APMmgtCtrl', [
 
     var confirm = $mdDialog.confirm()
           .title('Bulk Update from APM')
-          .textContent('This will overwrite ALL Portal DB categories and ACLs and Reset Portal DB groups')
+          .textContent('This will overwrite ALL Portal DB categories and ACLs and Reset Portal DB groups assignments')
           .ariaLabel('Pull Bulk from APM')
           .targetEvent(ev)
           .ok("Let's do it!")
           .cancel('Cancel');
       $mdDialog.show(confirm).then(function() {
           //if confirm
+          $scope.progressbar=false;
           $http.get('/getapmcategories', {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
             if (data.data == "{KO}") {
+              $scope.progressbar=true;
               showSimpleToast("top right","Error making change to Portal DB")
             }
+            $scope.progressbar=true;
             showSimpleToast("top right","Change done to Portal DB")
           }, function(response) {
+            $scope.progressbar=true;
             showSimpleToast("top right","Error making change to Portal DB")
           })  ;
       }, function() {
@@ -776,11 +794,10 @@ app.factory('networklocations', ['$http', 'auth','$mdToast', function($http, aut
     });
   };
   nl.pullnetworkfromapm = function() {
-    $http.get('/apmnetworklocations', {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
+    return $http.get('/apmnetworklocations', {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
       if (data.data != "{KO}") {
         angular.copy(data.data.records,nl.networklocations);
-
-          showSimpleToast('top right',"Network locations Retrieval successfull from APM");
+        showSimpleToast('top right',"Network locations Retrieval successfull from APM");
       } else {
         //something bad happened
         //get working but error code back KO
@@ -793,11 +810,10 @@ app.factory('networklocations', ['$http', 'auth','$mdToast', function($http, aut
   )};//end pull
 
     nl.pushnetworktoapm = function() {
-      $http.put('/apmnetworklocations', {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
+      return $http.put('/apmnetworklocations', {headers: {Authorization: 'Bearer '+auth.getToken()}}).then(function(data){
         if (data.data != "{KO}") {
           /*angular.copy(data.data.records,nl.networklocations);*/
-
-            showSimpleToast('top right',"Network Locations successfull pushed to APM");
+          showSimpleToast('top right',"Network Locations successfull pushed to APM");
         } else {
           //something bad happened
           //get working but error code back KO
@@ -828,6 +844,7 @@ app.controller('networklocationCtrl', [
     $scope.newlocation.data="";
     $scope.showhint=false;
     $scope.networklocations=networklocations.networklocations;
+    $scope.progressbar=true;
 
     $scope.removeLocation = function(locationid){
       networklocations.removeLocation(locationid);
@@ -854,13 +871,13 @@ app.controller('networklocationCtrl', [
             .cancel('Cancel');
         $mdDialog.show(confirm).then(function() {
             //if confirm
-            networklocations.pushnetworktoapm();
-
+          $scope.progressbar=false;
+          networklocations.pushnetworktoapm().then(function(){
+            $scope.progressbar=true;
+          }) ;
         }, function() {
             //do nothing on cancel
-
           });
-
     }; //end confirm push
     //end md-dialog
 
@@ -876,15 +893,15 @@ app.controller('networklocationCtrl', [
             .cancel('Cancel');
         $mdDialog.show(confirm).then(function() {
             //if confirm
-            networklocations.pullnetworkfromapm();
-
+          $scope.progressbar=false;
+          networklocations.pullnetworkfromapm().then(function(){
+            $scope.progressbar=true;
+          }) ;
         }, function() {
           //do nothing on cancel
-
         });
     };
     //end md-dialog
-
 }]);
 
 app.controller('MainCtrl', [
