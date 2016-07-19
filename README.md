@@ -1,5 +1,4 @@
 This is a delegation portal for F5 APM VPNSSL build with MEAN stack framework (MongoDB, ExpressJS, AngularJS, NodeJs) and Angular Material for UI, providing delegation capacties for some APM features :
-
     Custom url categories
     ACLS
     data group entry for private IP localisation
